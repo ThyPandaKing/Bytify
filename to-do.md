@@ -1,0 +1,30 @@
+- [x] File input
+- [ ] Instruction list
+- [ ] Data Segment updating in start
+- [ ] Using Hex or dec ??
+- [ ] Instruction Fetching -> Function
+  - [ ] Instructions List passing
+  - [ ] Correct Instruction in case of Jump
+- [ ] Decoding and Register fetch -> Function
+  - [ ] Add/Sub/Mul/Div
+  - [ ] Jump
+  - [ ] BNE/BEQ
+  - [ ] Load/Store
+  - [ ] Register decoding
+  - [ ] Finding constants in oct , hex , dec as given
+- [ ] Execute -> Function
+  - [ ] Add/Sub/Mul/Div
+  - [ ] Jump
+  - [ ] BNE/BEQ
+  - [ ] Load/Store
+- [ ] Memory operations -> Function
+  - [ ] Store
+- [ ] Write Back -> Function
+  - [ ] Add/Sub/Mul/Div
+  - [ ] Jump
+  - [ ] BNE/BEQ
+  - [ ] Load
+- [ ] Updating Data Segment and showing updates
+  - [ ] Step by Stem execution
+  - [ ] Instructions Showing
+- [ ] Adding GUI

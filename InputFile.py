@@ -1,41 +1,47 @@
-# file input as it is
-file = open('TestCase1.txt', 'r')
+def InputFile():
 
-# all lines in a list
-l = file.readlines()
+    # file input as it is
+    file = open('TestCase1.txt', 'r')
 
-# extacting them in better way
-instructions = []
+    # all lines in a list
+    l = file.readlines()
 
-# data simplification
-for list in l:
-    # removing starting and ending spaces
-    list = list.strip()
+    # extacting them in better way
+    instructions = []
 
-    # enter when we have something in line
-    if len(list) > 0:
-        temp = ''
-        for k in list:
-            # removing comments
-            if k[0] == '#':
-                break
-            temp += k
-        # add better line
-        if len(temp) > 0:
-            instructions.append(temp)
+    # data simplification
+    for list in l:
+        # removing starting and ending spaces
+        list = list.strip()
 
-dataSegment = []
+        # enter when we have something in line
+        if len(list) > 0:
+            temp = ''
+            for k in list:
+                # removing comments
+                if k[0] == '#':
+                    break
+                temp += k
+            # add better line
+            if len(temp) > 0:
+                instructions.append(temp)
 
-i = 0
-# seprating data and instrution segment
-for inst in instructions:
-    i += 1
-    if inst == '.text':
-        break
-    dataSegment.append(inst)
+    dataSegment = []
 
+    i = 0
+    # seprating data and instrution segment
+    for inst in instructions:
+        i += 1
+        if inst == '.text':
+            break
+        dataSegment.append(inst)
 
-instructions = instructions[i-1:]
+    instructions = instructions[i-1:]
+    # for dta in dataSegment:
+    #     print(dta)
 
-# for inst in instructions:
-#     print(inst)
+    # print()
+    # for inst in instructions:
+    #     print(inst)
+
+    return instructions, dataSegment
