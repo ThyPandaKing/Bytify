@@ -2,6 +2,8 @@
 - [ ] Instruction list
 - [ ] Data Segment updating in start
 - [ ] Using Hex or dec ??
+- [ ] Registers
+- [ ] Instruction addresses
 - [ ] Instruction Fetching -> Function
   - [ ] Instructions List passing
   - [ ] Correct Instruction in case of Jump

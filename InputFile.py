@@ -37,11 +37,11 @@ def InputFile():
         dataSegment.append(inst)
 
     instructions = instructions[i-1:]
-    # for dta in dataSegment:
-    #     print(dta)
+    for dta in dataSegment:
+        print(dta)
 
-    # print()
-    # for inst in instructions:
-    #     print(inst)
+    print()
+    for inst in instructions:
+        print(inst)
 
     return instructions, dataSegment
