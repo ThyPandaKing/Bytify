@@ -27,8 +27,7 @@ check:
     sw      $t2 , 4($s1)          # save count zero
     j		    SomePrinting					# jump to SomePrinting
     
-incZero:
-    addi	$t1, $t1, 1			# $t1 = $t1 + 1
+incZero: addi	$t1, $t1, 1			# $t1 = $t1 + 1
     j		check				      # jump to check
     
 incOne:
