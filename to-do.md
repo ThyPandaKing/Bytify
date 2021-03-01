@@ -1,9 +1,9 @@
 - [x] File input
-- [ ] Instruction list
+- [x] Instruction list
 - [ ] Data Segment updating in start
-- [ ] Using Hex or dec ??
-- [ ] Registers
-- [ ] Instruction addresses
+- [x] Using Hex or dec ??
+- [x] Registers
+- [x] Instruction addresses
 - [ ] Instruction Fetching -> Function
   - [ ] Instructions List passing
   - [ ] Correct Instruction in case of Jump

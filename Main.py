@@ -6,9 +6,39 @@ Addres = {}
 
 
 Register = {
-    '$R1': 0x0,
-    'R2': 0x0,
-    'T1': 0x0
+
+    "$zero": 0x0,      # Hard-wired to 0
+    "$at": 0x0,        # Reserved for pseudo-instructions
+    "$v0": 0x0,
+    "$v1": 0x0,        # Return values from functions
+    "$a0": 0x0,         # Arguments to functions - not preserved by subprograms
+    "$a1": 0x0,
+    "$a2": 0x0,
+    "$a3": 0x0,
+    "$t0": 0x0,         # Temporary data, not preserved by subprograms
+    "$t1": 0x0,
+    "$t2": 0x0,
+    "$t3": 0x0,
+    "$t4": 0x0,
+    "$t5": 0x0,
+    "$t6": 0x0,
+    "$t7": 0x0,
+    "$s0": 0x0,         # Saved registers, preserved by subprograms
+    "$s1": 0x0,
+    "$s2": 0x0,
+    "$s3": 0x0,
+    "$s4": 0x0,
+    "$s5": 0x0,
+    "$s6": 0x0,
+    "$s7": 0x0,
+    "$t8": 0x0,         # More temporary registers, not preserved by subprograms
+    "$t9": 0x0,
+    "$k0": 0x0,
+    "$k1": 0x0,         # Reserved for kernel. Do not use.
+    "$gp": 0x0,         # Global Area Pointer(base of global data segment)
+    "$sp": 0x0,         # Stack Pointer
+    "$fp": 0x0,         # Frame Pointer
+    "$ra": 0x0          # Return Address
 }
 
 
