@@ -1,0 +1,19 @@
+.data
+  .word 10
+  .word 11
+
+.text 
+  .globl main
+
+main:
+  #lui $s1, 0x1001
+  
+  lw $s0, 0($s1)
+  lw $s2 ,4($s1)
+
+  add $t0, $s2, $s0
+
+  sw $t0 , 8($s1)
+  
+
+  jr $ra

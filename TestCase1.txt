@@ -8,6 +8,9 @@ MSG2:  .asciiz "\nCount of One  is : "
 
 .globl main
 main:
+    lw  $s0 , 100($s1)
+    bne     $t0 , $t3 ,Loop
+    mul$r1,$r2,$r3
     lui $s1 , 0x1001
     lw  $s0 , 0($s1)       # number to compute
     li  $s2 , 1            # act as counter to 32 bit number

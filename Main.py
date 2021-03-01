@@ -1,12 +1,11 @@
 import InputFile as InputFile
 import re
 
-DataSegment = []
 Addres = {}
+PC = 0
 
 
 Register = {
-
     "$zero": 0x0,      # Hard-wired to 0
     "$at": 0x0,        # Reserved for pseudo-instructions
     "$v0": 0x0,
@@ -42,17 +41,6 @@ Register = {
 }
 
 
-def MakeDataSegment():
-    Size = 1024
-    while Size > 0:
-        Size -= 1
-        DataSegment.append(0)
-
-
-def FillDataSegment(Data):
-    pass
-
-
 def improveInstructions(Instructions):
     pc = 0
     temp = []
@@ -78,20 +66,103 @@ def improveInstructions(Instructions):
         Instructions.remove(tep)
 
 
-MakeDataSegment()
-
 Instructions, Data = InputFile.InputFile()
 
-FillDataSegment(Data)  # filling data segment
 improveInstructions(Instructions)  # for branch instructions
+# for dta in Data:
+#     print(dta)
+
+# print(Addres)
 
 
-PC = 0
+def InstructionFetch(PC):
+    inst = Instructions[PC]
+    PC += 1
+    return inst, PC
+
+
+def InstructionDecode(inst):
+    idx = 0
+    instType = ""
+    if inst[0] == 'j' and inst[1] != 'r':
+        instType = 'j'
+        inst = inst[1:]
+        inst = inst.strip()
+    else:
+        for ch in inst:
+
+            if ch == '$':
+                break
+            instType += ch
+            idx += 1
+
+    instType = instType.strip()
+    inst = inst[idx:]
+    # print(inst)
+    inst = inst.replace(",", " ")
+    # print(inst)
+    arr = inst.split()
+    # arguments will depend upon instType
+    # 1. add,sub,mul,div
+    if instType == "add" or instType == "sub" or instType == "mul" or instType == "div" or instType == 'addi':
+        return instType, arr
+    elif instType == "beq" or instType == "bne":
+        return instType, arr
+    elif instType == "lw" or instType == "sw":
+        tempInst = instType
+        instType = "add"
+        temp1 = arr[0]
+        inst = arr[1]
+        temp = ""
+        idx = 0
+        for ele in inst:
+            if ele == '(':
+                temp2 = inst[idx+1:]
+                temp2 = temp2.replace(')', ' ')
+                temp2 = temp2.strip()
+                break
+            else:
+                temp += ele
+                idx += 1
+
+        arr = [temp1, temp, temp2, tempInst]
+        return instType, arr
+    elif instType == "jr":
+        return instType, ["$ra"]
+    elif instType == 'j':
+        return instType, arr
+    elif instType == 'li':
+        return instType, arr
+
+    else:
+        print("ERROR: cmd not found")
+        return -1, -1
+
+
 while 1:
+    # print(PC)
+    inst, PC = InstructionFetch(PC)
+    # print(PC)
+    instType, arguments = InstructionDecode(inst)
+    if instType != -1:
+        print(instType, " ", arguments)
+    else:
+        print(inst)
+    # for k in arguments:
+    #     print(k)
+
+    if PC == len(Instructions):
+        break
     # instruction fetch -> increase pc , send inst to next guy
     # Instruction decode/ RF -> for every inst , find what it is and to whom it is
     # Execution (Class) -> just execute whatever is given by ID/RF
     # Mem -> SW , DATA segment work
     # WB -> Concerned regisers
     # Print current Registers
-    break
+    # break
+
+# 1. execute -> given -> instruction Type , list of registers
+# 2. mem address save
+
+# 1. instruction fetch
+# 2. Decode and rf -> string input

@@ -1,17 +1,17 @@
 - [x] File input
 - [x] Instruction list
-- [ ] Data Segment updating in start
+- [x] Data Segment updating in start
 - [x] Using Hex or dec ??
 - [x] Registers
 - [x] Instruction addresses
-- [ ] Instruction Fetching -> Function
-  - [ ] Instructions List passing
-  - [ ] Correct Instruction in case of Jump
-- [ ] Decoding and Register fetch -> Function
-  - [ ] Add/Sub/Mul/Div
-  - [ ] Jump
-  - [ ] BNE/BEQ
-  - [ ] Load/Store
+- [x] Instruction Fetching -> Function
+  - [x] Instructions List passing
+  - [x] Correct Instruction in case of Jump
+- [x] Decoding and Register fetch -> Function
+  - [x] Add/Sub/Mul/Div
+  - [x] Jump
+  - [x] BNE/BEQ
+  - [x] Load/Store
   - [ ] Register decoding
   - [ ] Finding constants in oct , hex , dec as given
 - [ ] Execute -> Function
@@ -26,6 +26,9 @@
   - [ ] Jump
   - [ ] BNE/BEQ
   - [ ] Load
+- [ ] Errors
+  - [ ] Syntax
+  - [ ] Segmentation error
 - [ ] Updating Data Segment and showing updates
   - [ ] Step by Stem execution
   - [ ] Instructions Showing
