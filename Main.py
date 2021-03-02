@@ -82,12 +82,19 @@ def InstructionFetch(PC):
 
 
 def InstructionDecode(inst):
+    if inst == "syscall":
+        return "syscall", []
     idx = 0
     instType = ""
-    if inst[0] == 'j' and inst[1] != 'r':
+    if inst[0] == 'j' and inst[1] != 'r' and inst[1] == ' ':
         instType = 'j'
         inst = inst[1:]
         inst = inst.strip()
+    elif "jal" in inst:
+        instType = "jal"
+        inst = inst[4:]
+        inst = inst.strip()
+        return instType, [inst]
     else:
         for ch in inst:
 
@@ -105,6 +112,8 @@ def InstructionDecode(inst):
     # arguments will depend upon instType
     # 1. add,sub,mul,div
     if instType == "add" or instType == "sub" or instType == "mul" or instType == "div" or instType == 'addi':
+        return instType, arr
+    elif instType == "and" or instType == "or" or instType == "sll" or instType == "srl" or instType == "andi":
         return instType, arr
     elif instType == "beq" or instType == "bne":
         return instType, arr
@@ -133,7 +142,8 @@ def InstructionDecode(inst):
         return instType, arr
     elif instType == 'li':
         return instType, arr
-
+    elif instType == 'la' or instType == "move" or instType == "lui":
+        return instType, arr
     else:
         print("ERROR: cmd not found")
         return -1, -1
