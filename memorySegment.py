@@ -10,7 +10,7 @@ while 1:
         if(s.find('.word')!=-1):
             l=s.find('.word')
             final = s[l+5:]
-            final=final.replace(',','')
+            final=final.replace(',',' ')
             get = final.split()
             for i in range(0,len(get)):
               dataSegmentNormal.append(get[i])
