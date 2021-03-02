@@ -1,9 +1,11 @@
 import InputFile as InputFile
-import re
+import memorySegment as FillMemory
 
 Addres = {}
+MemAddres = {}
 PC = 0
 
+dataSegment = 1024*[0]
 
 Register = {
     "$zero": 0x0,      # Hard-wired to 0
@@ -73,6 +75,10 @@ improveInstructions(Instructions)  # for branch instructions
 #     print(dta)
 
 # print(Addres)
+indx = FillMemory.FillMemory(Data, dataSegment, MemAddres)
+
+# print(dataSegment[:indx])
+# print(MemAddres)
 
 
 def InstructionFetch(PC):
@@ -86,15 +92,20 @@ def InstructionDecode(inst):
         return "syscall", []
     idx = 0
     instType = ""
-    if inst[0] == 'j' and inst[1] != 'r' and inst[1] == ' ':
-        instType = 'j'
-        inst = inst[1:]
-        inst = inst.strip()
-    elif "jal" in inst:
+
+    if "jal" in inst:
         instType = "jal"
         inst = inst[4:]
         inst = inst.strip()
+        try:
+            Addres[inst]
+        except:
+            return -1, -1
         return instType, [inst]
+    elif inst[0] == 'j' and inst[1] != 'r':
+        instType = 'j'
+        inst = inst[1:]
+        inst = inst.strip()
     else:
         for ch in inst:
 
@@ -112,10 +123,50 @@ def InstructionDecode(inst):
     # arguments will depend upon instType
     # 1. add,sub,mul,div
     if instType == "add" or instType == "sub" or instType == "mul" or instType == "div" or instType == 'addi':
+        if instType != "addi":
+            try:
+                for reg in arr:
+                    Register[reg]
+            except:
+                return -1, -1
+        else:
+            try:
+                for reg in arr:
+                    if reg != arr[-1]:
+                        Register[reg]
+                    else:
+                        int(reg)
+            except:
+                return -1, -1
+
         return instType, arr
     elif instType == "and" or instType == "or" or instType == "sll" or instType == "srl" or instType == "andi":
+        if instType == "and" or instType == "or":
+            try:
+                for reg in arr:
+                    Register[reg]
+            except:
+                return -1, -1
+        else:
+            try:
+                for reg in arr:
+                    if reg != arr[-1]:
+                        Register[reg]
+                    else:
+                        int(reg)
+            except:
+                return -1, -1
+
         return instType, arr
     elif instType == "beq" or instType == "bne":
+        try:
+            for reg in arr:
+                if reg != arr[-1]:
+                    Register[reg]
+                else:
+                    Addres[reg]
+        except:
+            return -1, -1
         return instType, arr
     elif instType == "lw" or instType == "sw":
         tempInst = instType
@@ -135,14 +186,50 @@ def InstructionDecode(inst):
                 idx += 1
 
         arr = [temp1, temp, temp2, tempInst]
+
+        try:
+            int(temp)
+            Register[temp1]
+            Register[temp2]
+        except:
+            return -1, -1
         return instType, arr
     elif instType == "jr":
         return instType, ["$ra"]
     elif instType == 'j':
+        try:
+            Addres[arr[0]]
+        except:
+            return -1, -1
         return instType, arr
     elif instType == 'li':
+        try:
+            int(arr[1])
+            Register[arr[0]]
+        except:
+            return -1, -1
         return instType, arr
     elif instType == 'la' or instType == "move" or instType == "lui":
+        if instType == "move":
+            try:
+                Register[arr[0]]
+                Register[arr[1]]
+            except:
+                return -1, -1
+        elif instType == "la":
+            try:
+                Register[arr[0]]
+
+                MemAddres[arr[1]]
+            except:
+                return -1, -1
+        else:
+            try:
+                Register[arr[0]]
+
+                MemAddres[arr[1]]
+            except:
+                return -1, -1
         return instType, arr
     else:
         print("ERROR: cmd not found")
@@ -150,29 +237,18 @@ def InstructionDecode(inst):
 
 
 while 1:
-    # print(PC)
     inst, PC = InstructionFetch(PC)
-    # print(PC)
     instType, arguments = InstructionDecode(inst)
     if instType != -1:
         print(instType, " ", arguments)
     else:
-        print(inst)
-    # for k in arguments:
-    #     print(k)
-
+        print("SYNTAX ERROR OCCURRED IN LINE : ",
+              PC, " INSTRUCTION : \"", inst, "\"")
+        break
     if PC == len(Instructions):
         break
-    # instruction fetch -> increase pc , send inst to next guy
-    # Instruction decode/ RF -> for every inst , find what it is and to whom it is
     # Execution (Class) -> just execute whatever is given by ID/RF
     # Mem -> SW , DATA segment work
     # WB -> Concerned regisers
     # Print current Registers
     # break
-
-# 1. execute -> given -> instruction Type , list of registers
-# 2. mem address save
-
-# 1. instruction fetch
-# 2. Decode and rf -> string input
