@@ -362,12 +362,21 @@ def writeBack(instructType,reqRegisters,temp):
          Register[reqRegisters[0]] = hex(temp)
 
 while 1:
+
     if PC == len(Instructions):
         break
-    #print(PC)
+    print(PC)
     inst = Instructions[PC]
     #print(inst)
-    InstructionFetch(inst)
+    ans=InstructionFetch(inst)
+    if  ans == -2:
+        print("TOO LESS ARGUMENTS ERROR OCCURRED IN LINE : ",PC, " INSTRUCTION : \"", inst, "\"")
+        break
+    elif ans == -1:
+        print("SYNTAX ERROR OCCURRED IN LINE : ",PC, " INSTRUCTION : \"", inst, "\"")
+        break
+    elif ans == "BREAK":
+        break
     print(Register)
     # instruction fetch -> increase pc , send inst to next guy
     # Instruction decode/ RF -> for every inst , find what it is and to whom it is
