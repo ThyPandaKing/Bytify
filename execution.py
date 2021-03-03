@@ -57,6 +57,35 @@ def execution(instruct, reqRegisters):
            return "BREAK"
     elif (instruct == "li"):
         temp = int(reqRegisters[1])
+    elif (instruct == "li"):
+        if (reqRegisters[1].find('x') != -1):
+            temp = int(reqRegisters[1],16)
+        else:
+            temp = int(reqRegisters[1])
+        return mem(instruct, reqRegisters, temp)
+    elif (instruct == "lui"):
+        number = reqRegisters[1] + "0000"
+        temp= int(number , 16)
+        return mem(instruct, reqRegisters,temp)
+    elif (instruct == "la"):
+        temp = dataAddress[reqRegisters[1]]
+        return mem(instruct, reqRegisters, temp)
+    elif (instruct == "move"):
+        temp = int(Register[reqRegisters[1]],16)
+        return mem(instruct, reqRegisters, temp)
+    elif (instruct == "srl"):
+        temp = int(Register[reqRegisters[1]])>> int(reqRegisters[2])
+        return mem(instruct, reqRegisters, temp)
+    elif (instruct == "sll"):
+        temp = int(Register[reqRegisters[1]])<< int(reqRegisters[2])
+        return mem(instruct, reqRegisters, temp)
+    elif (instruct == "addi"):
+        if (reqRegisters[2].find('x') != -1):
+            temp = int(Register[reqRegisters[1]],16) & int(reqRegisters[2], 16)
+        else:
+            temp = int(Register[reqRegisters[1]],16) & int(reqRegisters[2])
+        return mem(instruct, reqRegisters,temp)
+
 """
 Register = {
     "$zero": 0x0,      # Hard-wired to 0
