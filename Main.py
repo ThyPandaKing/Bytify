@@ -326,7 +326,7 @@ def execution(instruct, reqRegisters):
         temp= int(number , 16)
         return mem(instruct, reqRegisters,temp)
     elif (instruct == "la"):
-        temp = dataAddress[reqRegisters[1]]
+        temp = MemAddres[reqRegisters[1]]
         return mem(instruct, reqRegisters, temp)
     elif (instruct == "move"):
         temp = int(Register[reqRegisters[1]],16)
@@ -360,7 +360,7 @@ def writeBack(instructType,reqRegisters,temp):
     global PC
     if instructType=="add" or instructType=="sub" or  instructType=="subi" or instructType=="mul" or instructType=="div" or instructType=="addi" or instructType=="and" or instructType=="or" or instructType=="not" or instructType=="li" or instructType=="lui" or instructType=="la" or instructType=="move" or instructType=="srl" or instructType=="sll" or instructType=="andi":
          Register[reqRegisters[0]] = hex(temp)
-
+#print(MemAddres)
 while 1:
 
     if PC == len(Instructions):
