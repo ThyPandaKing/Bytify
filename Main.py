@@ -314,7 +314,7 @@ def execution(instruct, reqRegisters):
            PC = Addres[reqRegisters[0]]
            return mem(instruct, reqRegisters, True)
     elif (instruct == "jr"):
-        return mem(instruct, reqRegisters,"BREAK")
+        return "BREAK"
     elif (instruct == "li"):
         if (reqRegisters[1].find('x') != -1):
             temp = int(reqRegisters[1],16)
@@ -369,10 +369,10 @@ while 1:
     inst = Instructions[PC]
     #print(inst)
     ans=InstructionFetch(inst)
-    if  ans == -2:
+    if  ans == (-2,-2):
         print("TOO LESS ARGUMENTS ERROR OCCURRED IN LINE : ",PC, " INSTRUCTION : \"", inst, "\"")
         break
-    elif ans == -1:
+    elif ans == (-1,-1):
         print("SYNTAX ERROR OCCURRED IN LINE : ",PC, " INSTRUCTION : \"", inst, "\"")
         break
     elif ans == "BREAK":
