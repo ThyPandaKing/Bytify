@@ -1,8 +1,12 @@
 import InputFile as InputFile
 import re
+import memorySegment as FillMemory
 
 Addres = {}
+MemAddres = {}
 PC = 0
+
+dataSegment = 1024*[0]
 
 Register = {
     "$zero": '0x0',      # Hard-wired to 0
@@ -68,13 +72,10 @@ def improveInstructions(Instructions):
 Instructions, Data = InputFile.InputFile()
 
 improveInstructions(Instructions)  # for branch instructions
-# for dta in Data:
-#     print(dta)
 
-# print(Addres)
+indx = FillMemory.FillMemory(Data, dataSegment, MemAddres)
 
 
-PC=0
 def InstructionFetch(inst):
  #   inst = Instructions[PC]
      global PC
@@ -89,15 +90,20 @@ def InstructionDecode(inst):
         return execution("syscall", [])
     idx = 0
     instType = ""
-    if inst[0] == 'j' and inst[1] != 'r' and inst[1] == ' ':
-        instType = 'j'
-        inst = inst[1:]
-        inst = inst.strip()
-    elif "jal" in inst:
+
+    if "jal" in inst:
         instType = "jal"
         inst = inst[4:]
         inst = inst.strip()
+        try:
+            Addres[inst]
+        except:
+            return -1, -1
         return execution(instType, [inst])
+    elif inst[0] == 'j' and inst[1] != 'r':
+        instType = 'j'
+        inst = inst[1:]
+        inst = inst.strip()
     else:
         for ch in inst:
 
@@ -115,12 +121,66 @@ def InstructionDecode(inst):
     # arguments will depend upon instType
     # 1. add,sub,mul,div
     if instType == "add" or instType == "sub" or instType == "mul" or instType == "div" or instType == 'addi'or instType == 'subi':
-        return execution(instType, arr)
+        if instType != "addi":
+            try:
+                for reg in arr:
+                    Register[reg]
+            except:
+                return -1, -1
+        else:
+            try:
+                for reg in arr:
+                    if reg != arr[-1]:
+                        Register[reg]
+                    else:
+                        int(reg)
+            except:
+                return -1, -1
+        if len(arr) != 3:
+            return -2, -2
+        else:
+            return execution(instType, arr)
     elif instType == "and" or instType == "or" or instType == "sll" or instType == "srl" or instType == "andi":
-        return execution(instType, arr)
+        if instType == "and" or instType == "or":
+            try:
+                for reg in arr:
+                    Register[reg]
+            except:
+                return -1, -1
+        else:
+            try:
+                for reg in arr:
+                    if reg != arr[-1]:
+                        Register[reg]
+                    else:
+                        int(reg)
+            except:
+                return -1, -1
+
+        if len(arr) != 3:
+            return -2, -2
+        else:
+            return execution(instType, arr)
     elif instType == "beq" or instType == "bne":
-        return execution(instType, arr)
+        try:
+            for reg in arr:
+                if reg != arr[-1]:
+                    Register[reg]
+                else:
+                    Addres[reg]
+        except:
+            return -1, -1
+
+        if len(arr) != 3:
+            return -2, -2
+        else:
+            return execution(instType, arr)
     elif instType == "lw" or instType == "sw":
+        if inst.find('(') == -1:
+            return -1, -1
+        elif inst.find(')') == -1:
+            return -1, -1
+
         tempInst = instType
         instType = "add"
         temp1 = arr[0]
@@ -138,15 +198,60 @@ def InstructionDecode(inst):
                 idx += 1
 
         arr = [temp1, temp, temp2, tempInst]
+
+        try:
+            int(temp)
+            Register[temp1]
+            Register[temp2]
+        except:
+            return -1, -1
         return execution(instType, arr)
     elif instType == "jr":
         return execution(instType, ["$ra"])
     elif instType == 'j':
-        return execution(instType, arr)
+        try:
+            Addres[arr[0]]
+        except:
+            return -1, -1
+        if len(arr) != 1:
+            return -2, -2
+        else:
+            return execution(instType, arr)
     elif instType == 'li':
-        return execution(instType, arr)
+        try:
+            int(arr[1])
+            Register[arr[0]]
+        except:
+            return -1, -1
+        if len(arr) != 2:
+            return -2, -2
+        else:
+            return execution(instType, arr)
     elif instType == 'la' or instType == "move" or instType == "lui":
-        return execution(instType, arr)
+        if instType == "move":
+            try:
+                Register[arr[0]]
+                Register[arr[1]]
+            except:
+                return -1, -1
+        elif instType == "la":
+            try:
+                Register[arr[0]]
+
+                MemAddres[arr[1]]
+            except:
+                return -1, -1
+        else:
+            try:
+                Register[arr[0]]
+
+                MemAddres[arr[1]]
+            except:
+                return -1, -1
+        if len(arr) != 2:
+            return -2, -2
+        else:
+            return execution(instType, arr)
     else:
         print("ERROR: cmd not found")
         return -1, -1
@@ -243,11 +348,11 @@ def mem(instructType,reqRegisters,temp):
     global PC
     if(len(reqRegisters)==4):
         if(reqRegisters[3] == "lw"):
-            Register[reqRegisters[0]] = dataSegment[int(temp)]
-
+            Register[reqRegisters[0]] = hex(int(dataSegment[temp]))
+            # print(int(dataSegment[temp]))
             #lw s1 100(s0)
         else:
-            memory[temp] = Register[reqRegisters[0]]
+            dataSegment[temp] = Register[reqRegisters[0]]
     else:
         return writeBack(instructType,reqRegisters,temp)
 
@@ -259,8 +364,9 @@ def writeBack(instructType,reqRegisters,temp):
 while 1:
     if PC == len(Instructions):
         break
-    print(PC)
+    #print(PC)
     inst = Instructions[PC]
+    #print(inst)
     InstructionFetch(inst)
     print(Register)
     # instruction fetch -> increase pc , send inst to next guy
