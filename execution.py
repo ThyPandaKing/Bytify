@@ -17,7 +17,7 @@ def execution(instruct, reqRegisters):
     elif (instruct == "div"):
         temp = int(Register[reqRegisters[1]]) / int(Register[reqRegisters[2]])
         return temp
-    elif (instruct == "addi"):
+    elif (instruct == "andi"):
         if (reqRegisters[2].find('x') != -1):
             temp = int(reqRegisters[2], 16) + int(Register[reqRegisters[1]])
         else:
@@ -79,7 +79,7 @@ def execution(instruct, reqRegisters):
     elif (instruct == "sll"):
         temp = int(Register[reqRegisters[1]])<< int(reqRegisters[2])
         return mem(instruct, reqRegisters, temp)
-    elif (instruct == "addi"):
+    elif (instruct == "andi"):
         if (reqRegisters[2].find('x') != -1):
             temp = int(Register[reqRegisters[1]],16) & int(reqRegisters[2], 16)
         else:

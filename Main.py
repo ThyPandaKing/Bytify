@@ -232,7 +232,7 @@ def execution(instruct, reqRegisters):
     elif (instruct == "sll"):
         temp = int(Register[reqRegisters[1]])<< int(reqRegisters[2])
         return mem(instruct, reqRegisters, temp)
-    elif (instruct == "addi"):
+    elif (instruct == "andi"):
         if (reqRegisters[2].find('x') != -1):
             temp = int(Register[reqRegisters[1]],16) & int(reqRegisters[2], 16)
         else:
@@ -243,7 +243,9 @@ def mem(instructType,reqRegisters,temp):
     global PC
     if(len(reqRegisters)==4):
         if(reqRegisters[3] == "lw"):
-            Register[reqRegisters[0]] = hex(temp)
+            Register[reqRegisters[0]] = dataSegment[int(temp)]
+
+            #lw s1 100(s0)
         else:
             memory[temp] = Register[reqRegisters[0]]
     else:
@@ -251,7 +253,7 @@ def mem(instructType,reqRegisters,temp):
 
 def writeBack(instructType,reqRegisters,temp):
     global PC
-    if instructType=="add" or instructType=="sub" or  instructType=="subi" or instructType=="mul" or instructType=="div" or instructType=="addi" or instructType=="and" or instructType=="or" or instructType=="not" or instructType=="li" or instructType=="lui" or instructType=="la" or instructType=="move":
+    if instructType=="add" or instructType=="sub" or  instructType=="subi" or instructType=="mul" or instructType=="div" or instructType=="addi" or instructType=="and" or instructType=="or" or instructType=="not" or instructType=="li" or instructType=="lui" or instructType=="la" or instructType=="move" or instructType=="srl" or instructType=="sll" or instructType=="andi":
          Register[reqRegisters[0]] = hex(temp)
 
 while 1:
