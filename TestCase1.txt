@@ -19,7 +19,7 @@ main:
     li  $t1 , 0            # count 0
     li  $t2 , 0            # count 1
 Loop: 
-    and     $s3 , $s0 , $s2       # to check the bit
+    and     $s3 , $s0 , $s0       # to check the bit
     andi	  $t0,$t0,3	        # $t0 = $t1 + 1
     sll     $s2 , $s2 , 1         # shift the number bit, x2
     beq     $s3 , $zero , incZero # found 0 -> and is zero

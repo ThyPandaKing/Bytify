@@ -71,14 +71,8 @@ def improveInstructions(Instructions):
 Instructions, Data = InputFile.InputFile()
 
 improveInstructions(Instructions)  # for branch instructions
-# for dta in Data:
-#     print(dta)
 
-# print(Addres)
 indx = FillMemory.FillMemory(Data, dataSegment, MemAddres)
-
-# print(dataSegment[:indx])
-# print(MemAddres)
 
 
 def InstructionFetch(PC):
@@ -138,8 +132,10 @@ def InstructionDecode(inst):
                         int(reg)
             except:
                 return -1, -1
-
-        return instType, arr
+        if len(arr) != 3:
+            return -2, -2
+        else:
+            return instType, arr
     elif instType == "and" or instType == "or" or instType == "sll" or instType == "srl" or instType == "andi":
         if instType == "and" or instType == "or":
             try:
@@ -157,7 +153,10 @@ def InstructionDecode(inst):
             except:
                 return -1, -1
 
-        return instType, arr
+        if len(arr) != 3:
+            return -2, -2
+        else:
+            return instType, arr
     elif instType == "beq" or instType == "bne":
         try:
             for reg in arr:
@@ -167,8 +166,17 @@ def InstructionDecode(inst):
                     Addres[reg]
         except:
             return -1, -1
-        return instType, arr
+
+        if len(arr) != 3:
+            return -2, -2
+        else:
+            return instType, arr
     elif instType == "lw" or instType == "sw":
+        if inst.find('(') == -1:
+            return -1, -1
+        elif inst.find(')') == -1:
+            return -1, -1
+
         tempInst = instType
         instType = "add"
         temp1 = arr[0]
@@ -201,14 +209,20 @@ def InstructionDecode(inst):
             Addres[arr[0]]
         except:
             return -1, -1
-        return instType, arr
+        if len(arr) != 1:
+            return -2, -2
+        else:
+            return instType, arr
     elif instType == 'li':
         try:
             int(arr[1])
             Register[arr[0]]
         except:
             return -1, -1
-        return instType, arr
+        if len(arr) != 2:
+            return -2, -2
+        else:
+            return instType, arr
     elif instType == 'la' or instType == "move" or instType == "lui":
         if instType == "move":
             try:
@@ -230,7 +244,11 @@ def InstructionDecode(inst):
                 MemAddres[arr[1]]
             except:
                 return -1, -1
-        return instType, arr
+        if len(arr) != 2:
+            return -2, -2
+        else:
+            return instType, arr
+
     else:
         print("ERROR: cmd not found")
         return -1, -1
@@ -239,12 +257,17 @@ def InstructionDecode(inst):
 while 1:
     inst, PC = InstructionFetch(PC)
     instType, arguments = InstructionDecode(inst)
-    if instType != -1:
-        print(instType, " ", arguments)
-    else:
+    if instType == -2:
+        print("TOO LESS ARGUMENTS ERROR OCCURRED IN LINE : ",
+              PC, " INSTRUCTION : \"", inst, "\"")
+        break
+    elif instType == -1:
         print("SYNTAX ERROR OCCURRED IN LINE : ",
               PC, " INSTRUCTION : \"", inst, "\"")
         break
+    else:
+        print(instType, " ", arguments)
+
     if PC == len(Instructions):
         break
     # Execution (Class) -> just execute whatever is given by ID/RF
