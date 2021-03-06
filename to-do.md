@@ -12,8 +12,8 @@
   - [x] Jump
   - [x] BNE/BEQ
   - [x] Load/Store
-  - [ ] Register decoding
-  - [ ] Finding constants in oct , hex , dec as given
+  - [x] Register decoding
+  - [x] Finding constants in oct , hex , dec as given
 - [ ] Execute -> Function
   - [ ] Add/Sub/Mul/Div
   - [ ] Jump
@@ -26,8 +26,8 @@
   - [ ] Jump
   - [ ] BNE/BEQ
   - [ ] Load
-- [ ] Errors
-  - [ ] Syntax
+- [x] Errors
+  - [x] Syntax
   - [ ] Segmentation error
 - [ ] Updating Data Segment and showing updates
   - [ ] Step by Stem execution
