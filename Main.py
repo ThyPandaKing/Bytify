@@ -244,8 +244,8 @@ def InstructionDecode(inst):
         else:
             try:
                 Register[arr[0]]
-
-                MemAddres[arr[1]]
+                dataSegment[int(arr[1],16)]
+                #MemAddres[arr[1]]
             except:
                 return -1, -1
         if len(arr) != 2:
@@ -343,12 +343,14 @@ def execution(instruct, reqRegisters):
         else:
             temp = int(Register[reqRegisters[1]],16) & int(reqRegisters[2])
         return mem(instruct, reqRegisters,temp)
+    elif (instruct == "syscall"):
+        return mem(instruct, reqRegisters,0)
 
 def mem(instructType,reqRegisters,temp):
     global PC
     if(len(reqRegisters)==4):
         if(reqRegisters[3] == "lw"):
-            Register[reqRegisters[0]] = hex(int(dataSegment[temp]))
+            Register[reqRegisters[0]] = hex(int(dataSegment[temp//4]))
             # print(int(dataSegment[temp]))
             #lw s1 100(s0)
         else:
@@ -360,12 +362,27 @@ def writeBack(instructType,reqRegisters,temp):
     global PC
     if instructType=="add" or instructType=="sub" or  instructType=="subi" or instructType=="mul" or instructType=="div" or instructType=="addi" or instructType=="and" or instructType=="or" or instructType=="not" or instructType=="li" or instructType=="lui" or instructType=="la" or instructType=="move" or instructType=="srl" or instructType=="sll" or instructType=="andi":
          Register[reqRegisters[0]] = hex(temp)
+    if instructType=="syscall":
+      if (int(Register['$v0'],16)==1):
+          values = list(MemAddres.values())
+          position = values.index(int(Register['$a0'], 16))
+          for i in range(0, values[position + 1] - values[position]):
+              print(int(dataSegment[int(Register['$a0'], 16) + i],16), end=" ")
+          print()
+          ##write try and catch for this...
+      elif (int(Register['$v0'],16)==4):
+        values = list(MemAddres.values())
+        position = values.index(int(Register['$a0'],16))
+        for i in range(0,values[position+1]-values[position]):
+           print(dataSegment[int(Register['$a0'],16)+i], end ="")
+        print()
+#print(dataSegment)
 #print(MemAddres)
 while 1:
 
     if PC == len(Instructions):
         break
-    print(PC)
+    #print(PC)
     inst = Instructions[PC]
     #print(inst)
     ans=InstructionFetch(inst)
@@ -378,6 +395,7 @@ while 1:
     elif ans == "BREAK":
         break
     print(Register)
+#print(Register)
     # instruction fetch -> increase pc , send inst to next guy
     # Instruction decode/ RF -> for every inst , find what it is and to whom it is
     # Execution (Class) -> just execute whatever is given by ID/RF
