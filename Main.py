@@ -370,6 +370,8 @@ def execution(instruct, reqRegisters):
         temp = int(Register[reqRegisters[2]], 16) > int(
             Register[reqRegisters[1]], 16)
         return mem(instruct, reqRegisters, temp)
+    elif (instruct == "syscall"):
+        return mem(instruct, reqRegisters, 0)
 
 
 def mem(instructType, reqRegisters, temp):
@@ -412,16 +414,16 @@ def writeBack(instructType, reqRegisters, temp):
             for i in range(0, values[position+1]-values[position]):
                 print(dataSegment[int(Register['$a0'], 16)+i], end="")
             print()
-# print(dataSegment)
+#print(dataSegment)
 
 
-# print(MemAddres)
+#print(MemAddres)
 while 1:
 
     if PC == len(Instructions):
         break
     inst = Instructions[PC]
-    print(inst)
+    #print(inst)
     ans = InstructionFetch(inst)
 
     print(Register)
@@ -429,7 +431,6 @@ while 1:
     for i in range(0, indx+10):
         print(dataSegment[i], end=" ")
     print()
-
     if ans == (-2, -2):
         print("TOO LESS ARGUMENTS ERROR OCCURRED IN LINE : ",
               PC, " INSTRUCTION : \"", inst, "\"")
