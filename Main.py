@@ -377,6 +377,7 @@ def writeBack(instructType,reqRegisters,temp):
            print(dataSegment[int(Register['$a0'],16)+i], end ="")
         print()
 #print(dataSegment)
+
 #print(MemAddres)
 while 1:
 
