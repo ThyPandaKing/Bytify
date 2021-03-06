@@ -395,20 +395,31 @@ def mem(instructType, reqRegisters, temp):
 
 def writeBack(instructType, reqRegisters, temp):
     global PC
-    if instructType == "add" or instructType == "sub" or instructType == "subi" or instructType == "mul" or instructType == "div" or instructType == "addi" or instructType == "and" or instructType == "or" or instructType == "not" or instructType == "li" or instructType == "lui" or instructType == "la" or instructType == "move" or instructType == "srl" or instructType == "sll" or instructType == "andi" or instructType == "slt":
+    if instructType == "add" or instructType == "sub" or instructType == "subi" or instructType == "mul" or instructType == "div" or instructType == "addi" or instructType == "and" or instructType == "or" or instructType == "not" or instructType == "li" or instructType == "lui" or instructType == "la" or instructType == "move" or instructType == "srl" or instructType == "sll" or instructType == "andi":
         Register[reqRegisters[0]] = hex(temp)
+    if instructType == "syscall":
+        if (int(Register['$v0'], 16) == 1):
+            values = list(MemAddres.values())
+            position = values.index(int(Register['$a0'], 16))
+            for i in range(0, values[position + 1] - values[position]):
+                print(
+                    int(dataSegment[int(Register['$a0'], 16) + i], 16), end=" ")
+            print()
+            # write try and catch for this...
+        elif (int(Register['$v0'], 16) == 4):
+            values = list(MemAddres.values())
+            position = values.index(int(Register['$a0'], 16))
+            for i in range(0, values[position+1]-values[position]):
+                print(dataSegment[int(Register['$a0'], 16)+i], end="")
+            print()
+# print(dataSegment)
 
 
-print()
-for i in range(0, indx+10):
-    print(dataSegment[i], end=" ")
-print()
-
+# print(MemAddres)
 while 1:
 
     if PC == len(Instructions):
         break
-
     inst = Instructions[PC]
     print(inst)
     ans = InstructionFetch(inst)
