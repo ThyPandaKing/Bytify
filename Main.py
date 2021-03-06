@@ -78,10 +78,12 @@ indx = FillMemory.FillMemory(Data, dataSegment, MemAddres)
 
 def InstructionFetch(inst):
  #   inst = Instructions[PC]
-     global PC
-     inst = inst
-     PC = PC + 1
-     return InstructionDecode(inst)
+    global PC
+    inst = inst
+    PC = PC + 1
+    if inst == "":
+        return
+    return InstructionDecode(inst)
 
 
 def InstructionDecode(inst):
@@ -90,7 +92,9 @@ def InstructionDecode(inst):
         return execution("syscall", [])
     idx = 0
     instType = ""
-
+    # print(inst[0], inst[1])
+    t = inst.split()
+    # print(t)
     if "jal" in inst:
         instType = "jal"
         inst = inst[4:]
@@ -100,7 +104,7 @@ def InstructionDecode(inst):
         except:
             return -1, -1
         return execution(instType, [inst])
-    elif inst[0] == 'j' and inst[1] != 'r':
+    elif t[0] == 'j':
         instType = 'j'
         inst = inst[1:]
         inst = inst.strip()
@@ -120,7 +124,7 @@ def InstructionDecode(inst):
     arr = inst.split()
     # arguments will depend upon instType
     # 1. add,sub,mul,div
-    if instType == "add" or instType == "sub" or instType == "mul" or instType == "div" or instType == 'addi'or instType == 'subi':
+    if instType == "add" or instType == "sub" or instType == "mul" or instType == "div" or instType == 'addi' or instType == 'subi':
         if instType != "addi":
             try:
                 for reg in arr:
@@ -244,151 +248,190 @@ def InstructionDecode(inst):
         else:
             try:
                 Register[arr[0]]
-
-                MemAddres[arr[1]]
+                int(arr[1])
             except:
                 return -1, -1
         if len(arr) != 2:
             return -2, -2
         else:
             return execution(instType, arr)
+    elif instType == "slt":
+        try:
+            Register[arr[0]]
+            Register[arr[1]]
+            Register[arr[2]]
+        except:
+            return -1, -1
+        return execution(instType, arr)
     else:
         print("ERROR: cmd not found")
         return -1, -1
+
 
 def execution(instruct, reqRegisters):
     global PC
     if (instruct == "add"):
         if len(reqRegisters) == 3:
-                temp = int(Register[reqRegisters[1]],16) + int(Register[reqRegisters[2]],16)
+            temp = int(Register[reqRegisters[1]], 16) + \
+                int(Register[reqRegisters[2]], 16)
         else:
             if (reqRegisters[1].find('x') != -1):
-                temp = int(reqRegisters[1], 16) + int(Register[reqRegisters[2]],16)
+                temp = int(reqRegisters[1], 16) + \
+                    int(Register[reqRegisters[2]], 16)
             else:
-                temp = int(reqRegisters[1]) + int(Register[reqRegisters[2]],16)
-            #temp=str(temp)
-        return mem(instruct, reqRegisters,temp)
+                temp = int(reqRegisters[1]) + \
+                    int(Register[reqRegisters[2]], 16)
+            # temp=str(temp)
+        return mem(instruct, reqRegisters, temp)
     elif (instruct == "sub"):
-        temp = int(Register[reqRegisters[1]],16) - int(Register[reqRegisters[2]],16)
-        return mem(instruct, reqRegisters,temp)
+        temp = int(Register[reqRegisters[1]], 16) - \
+            int(Register[reqRegisters[2]], 16)
+        return mem(instruct, reqRegisters, temp)
     elif (instruct == "mul"):
-        temp = int(Register[reqRegisters[1]],16) * int(Register[reqRegisters[2]],16)
-        return mem(instruct, reqRegisters,temp)
+        temp = int(Register[reqRegisters[1]], 16) * \
+            int(Register[reqRegisters[2]], 16)
+        return mem(instruct, reqRegisters, temp)
     elif (instruct == "div"):
-        temp = int(Register[reqRegisters[1]],16) / int(Register[reqRegisters[2]],16)
-        return mem(instruct, reqRegisters,temp)
+        temp = int(Register[reqRegisters[1]], 16) / \
+            int(Register[reqRegisters[2]], 16)
+        return mem(instruct, reqRegisters, temp)
     elif (instruct == "addi"):
         if (reqRegisters[2].find('x') != -1):
-            temp = int(reqRegisters[2], 16) + int(Register[reqRegisters[1]],16)
+            temp = int(reqRegisters[2], 16) + \
+                int(Register[reqRegisters[1]], 16)
         else:
-            temp = int(reqRegisters[2]) + int(Register[reqRegisters[1]],16)
-        return mem(instruct, reqRegisters,temp)
+            temp = int(reqRegisters[2]) + int(Register[reqRegisters[1]], 16)
+        return mem(instruct, reqRegisters, temp)
     elif (instruct == "subi"):
         if (reqRegisters[2].find('x') != -1):
-            temp = int(Register[reqRegisters[1]],16) -  int(reqRegisters[2], 16)
+            temp = int(Register[reqRegisters[1]], 16) - \
+                int(reqRegisters[2], 16)
         else:
-            temp = int(Register[reqRegisters[1]],16) -  int(reqRegisters[2])
-        return mem(instruct, reqRegisters,temp)
+            temp = int(Register[reqRegisters[1]], 16) - int(reqRegisters[2])
+        return mem(instruct, reqRegisters, temp)
     elif (instruct == "and"):
-        temp = int(Register[reqRegisters[1]],16) & int(Register[reqRegisters[2]],16)
-        return mem(instruct, reqRegisters,temp)
+        temp = int(Register[reqRegisters[1]], 16) & int(
+            Register[reqRegisters[2]], 16)
+        return mem(instruct, reqRegisters, temp)
     elif (instruct == "or"):
-        temp = int(Register[reqRegisters[1]],16) | int(reqRegisters[2])
-        return mem(instruct, reqRegisters,temp)
+        temp = int(Register[reqRegisters[1]], 16) | int(reqRegisters[2])
+        return mem(instruct, reqRegisters, temp)
     elif (instruct == "not"):
-        temp = ~ int(Register[reqRegisters[1]],16)
-        return mem(instruct, reqRegisters,temp)
+        temp = ~ int(Register[reqRegisters[1]], 16)
+        return mem(instruct, reqRegisters, temp)
     elif (instruct == "bne"):
-        if Register[reqRegisters[0]] !=  Register[reqRegisters[1]] :
-           PC = Addres[reqRegisters[2]]
-           return mem(instruct, reqRegisters,True)
-        else :
-            return mem(instruct, reqRegisters,False)
+        if Register[reqRegisters[0]] != Register[reqRegisters[1]]:
+            PC = Addres[reqRegisters[2]]
+            return mem(instruct, reqRegisters, True)
+        else:
+            return mem(instruct, reqRegisters, False)
     elif (instruct == "beq"):
-        if Register[reqRegisters[0]] ==  Register[reqRegisters[1]] :
-           PC = Addres[reqRegisters[2]]
-           return mem(instruct, reqRegisters, True)
-        else :
+        if Register[reqRegisters[0]] == Register[reqRegisters[1]]:
+            PC = Addres[reqRegisters[2]]
+            print(Instructions[PC])
+            return mem(instruct, reqRegisters, True)
+        else:
             return mem(instruct, reqRegisters, False)
     elif (instruct == "j"):
-           PC = Addres[reqRegisters[0]]
-           return mem(instruct, reqRegisters, True)
+        PC = Addres[reqRegisters[0]]
+        return mem(instruct, reqRegisters, True)
     elif (instruct == "jr"):
         return "BREAK"
     elif (instruct == "li"):
         if (reqRegisters[1].find('x') != -1):
-            temp = int(reqRegisters[1],16)
+            temp = int(reqRegisters[1], 16)
         else:
             temp = int(reqRegisters[1])
         return mem(instruct, reqRegisters, temp)
     elif (instruct == "lui"):
-        number = reqRegisters[1] + "0000"
-        temp= int(number , 16)
-        return mem(instruct, reqRegisters,temp)
+        temp = int(reqRegisters[1])
+        return mem(instruct, reqRegisters, temp)
     elif (instruct == "la"):
         temp = MemAddres[reqRegisters[1]]
         return mem(instruct, reqRegisters, temp)
     elif (instruct == "move"):
-        temp = int(Register[reqRegisters[1]],16)
+        temp = int(Register[reqRegisters[1]], 16)
         return mem(instruct, reqRegisters, temp)
     elif (instruct == "srl"):
-        temp = int(Register[reqRegisters[1]])>> int(reqRegisters[2])
+        temp = int(Register[reqRegisters[1]], 16) >> int(reqRegisters[2])
         return mem(instruct, reqRegisters, temp)
     elif (instruct == "sll"):
-        temp = int(Register[reqRegisters[1]])<< int(reqRegisters[2])
+        temp = int(Register[reqRegisters[1]], 16) << int(reqRegisters[2])
         return mem(instruct, reqRegisters, temp)
     elif (instruct == "andi"):
         if (reqRegisters[2].find('x') != -1):
-            temp = int(Register[reqRegisters[1]],16) & int(reqRegisters[2], 16)
+            temp = int(Register[reqRegisters[1]],
+                       16) & int(reqRegisters[2], 16)
         else:
-            temp = int(Register[reqRegisters[1]],16) & int(reqRegisters[2])
-        return mem(instruct, reqRegisters,temp)
+            temp = int(Register[reqRegisters[1]], 16) & int(reqRegisters[2])
+        return mem(instruct, reqRegisters, temp)
+    elif instruct == "slt":
+        # print(reqRegisters)
+        temp = int(Register[reqRegisters[2]], 16) > int(
+            Register[reqRegisters[1]], 16)
+        return mem(instruct, reqRegisters, temp)
 
-def mem(instructType,reqRegisters,temp):
+
+def mem(instructType, reqRegisters, temp):
     global PC
-    if(len(reqRegisters)==4):
+    if(len(reqRegisters) == 4):
         if(reqRegisters[3] == "lw"):
-            Register[reqRegisters[0]] = hex(int(dataSegment[temp]))
+            print(type(dataSegment[temp//4]))
+            if(type(dataSegment[temp//4]) == int):
+                Register[reqRegisters[0]] = hex(dataSegment[temp//4])
+            else:
+                if dataSegment[temp//4].find('x') != -1:
+                    Register[reqRegisters[0]] = hex(
+                        int(dataSegment[temp//4], 16))
+                else:
+                    Register[reqRegisters[0]] = hex(int(dataSegment[temp//4]))
             # print(int(dataSegment[temp]))
-            #lw s1 100(s0)
+            # lw s1 100(s0)
         else:
-            dataSegment[temp] = Register[reqRegisters[0]]
+            dataSegment[temp//4] = Register[reqRegisters[0]]
     else:
-        return writeBack(instructType,reqRegisters,temp)
+        return writeBack(instructType, reqRegisters, temp)
 
-def writeBack(instructType,reqRegisters,temp):
+
+def writeBack(instructType, reqRegisters, temp):
     global PC
-    if instructType=="add" or instructType=="sub" or  instructType=="subi" or instructType=="mul" or instructType=="div" or instructType=="addi" or instructType=="and" or instructType=="or" or instructType=="not" or instructType=="li" or instructType=="lui" or instructType=="la" or instructType=="move" or instructType=="srl" or instructType=="sll" or instructType=="andi":
-         Register[reqRegisters[0]] = hex(temp)
-#print(MemAddres)
+    if instructType == "add" or instructType == "sub" or instructType == "subi" or instructType == "mul" or instructType == "div" or instructType == "addi" or instructType == "and" or instructType == "or" or instructType == "not" or instructType == "li" or instructType == "lui" or instructType == "la" or instructType == "move" or instructType == "srl" or instructType == "sll" or instructType == "andi" or instructType == "slt":
+        Register[reqRegisters[0]] = hex(temp)
+
+
+print()
+for i in range(0, indx+10):
+    print(dataSegment[i], end=" ")
+print()
+
 while 1:
 
     if PC == len(Instructions):
         break
-    print(PC)
+
     inst = Instructions[PC]
-    #print(inst)
-    ans=InstructionFetch(inst)
-    if  ans == (-2,-2):
-        print("TOO LESS ARGUMENTS ERROR OCCURRED IN LINE : ",PC, " INSTRUCTION : \"", inst, "\"")
+    print(inst)
+    ans = InstructionFetch(inst)
+
+    print(Register)
+    print()
+    for i in range(0, indx+10):
+        print(dataSegment[i], end=" ")
+    print()
+
+    if ans == (-2, -2):
+        print("TOO LESS ARGUMENTS ERROR OCCURRED IN LINE : ",
+              PC, " INSTRUCTION : \"", inst, "\"")
         break
-    elif ans == (-1,-1):
-        print("SYNTAX ERROR OCCURRED IN LINE : ",PC, " INSTRUCTION : \"", inst, "\"")
+    elif ans == (-1, -1):
+        print("SYNTAX ERROR OCCURRED IN LINE : ",
+              PC, " INSTRUCTION : \"", inst, "\"")
         break
     elif ans == "BREAK":
         break
-    print(Register)
-    # instruction fetch -> increase pc , send inst to next guy
-    # Instruction decode/ RF -> for every inst , find what it is and to whom it is
-    # Execution (Class) -> just execute whatever is given by ID/RF
-    # Mem -> SW , DATA segment work
-    # WB -> Concerned regisers
-    # Print current Registers
-    # break
+    # for (key, value) in Register.items():
+    #     print(key, value)
 
-# 1. execute -> given -> instruction Type , list of registers
-# 2. mem address save
-
-# 1. instruction fetch
-# 2. Decode and rf -> string input
-
+print()
+for i in range(0, indx+10):
+    print(dataSegment[i], end=" ")

@@ -18,9 +18,10 @@ def FillMemory(data, dataSegment, MemAddres):
                 m = int(get[i])
                 hexi = hex(m)
                 hexa = ''
-                for j in range(0, 10-len(hexi)):
-                    hexa += '0'
+                # for j in range(0, 10-len(hexi)):
+                #     hexa += '0'
                 hexa = hexa+hexi[2:]
+                hexa = "0x"+hexa
                 dataSegment[indx] = hexa
                 indx += 1
         if(dta.find('.asciiz') != -1):
