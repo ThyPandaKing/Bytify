@@ -1,7 +1,7 @@
 def InputFile():
 
     # file input as it is
-    file = open('TestCase1.txt', 'r')
+    file = open('TestCase1.s', 'r')
 
     # all lines in a list
     l = file.readlines()

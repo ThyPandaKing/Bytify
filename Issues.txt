@@ -1,3 +1,0 @@
-1. Hex or int.
-2. Address incrementing , mips add 4 we add 1
-3. 
