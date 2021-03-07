@@ -5,26 +5,24 @@
 #   return f;
 # }
 .data
-
+.word  1,2,3,4
 MSG1:  .asciiz "Give values of g,h,i,j to find value of (g+h)-(i+j)\n" 
 MSG2:  .asciiz "Answer -> "
 .text
 .globl main
 
 main:
-      lui   $s0, 0x1001
-      j     take_input
+      lui   $s0, 0
 load:
       lw		$a0, 0($s0)		 # Loading g
       lw    $a1, 4($s0)              # Loading h
       lw    $a2, 8($s0)              # Loading i
       lw    $a3, 12($s0)             # Loading j
-      jal		leaf_example	 # jump to leaf_example and save position to $ra
-      move 	$s1, $v0		       # storing value in other register
+      j		leaf_example	 # jump to leaf_example and save position to $ra
+ hue:     move 	$s1, $v0		       # storing value in other register
       sw		$s1, 16($s0)       # storing back the result value
-      jal		print			 # jump to print and save position to $ra
-      addi	$v0, $zero, 10		 # $v0 = $t1 + 0
-      syscall
+      jr		$ra					# jump to $ra
+      
       
 
 leaf_example: 
@@ -41,7 +39,7 @@ leaf_example:
       lw    $t1, 4($sp)                   # loading back the old values
       lw    $t2, 8($sp)                   # loading back the old values
       addi  $sp , $sp , 12                # increasing the stack pointer to normal
-      jr		$ra				# jump to $ra(return)
+      j		hue				# jump to $ra(return)
       
 
 print:

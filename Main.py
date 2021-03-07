@@ -1,5 +1,4 @@
 import InputFile as InputFile
-import re
 import memorySegment as FillMemory
 
 Addres = {}
@@ -415,9 +414,7 @@ def writeBack(instructType, reqRegisters, temp):
 # print(dataSegment)
 
 
-# print(MemAddres)
 while 1:
-
     if PC == len(Instructions):
         break
     inst = Instructions[PC]
