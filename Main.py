@@ -1,6 +1,7 @@
 import InputFile as InputFile
 import re
 import memorySegment as FillMemory
+from tkinter import *
 
 Addres = {}
 MemAddres = {}
@@ -43,7 +44,11 @@ Register = {
     "$ra": '0x0'          # Return Address
 }
 
-
+changedRegisters={
+    "$zero":0,"$at":0,"$v0":0,"$v1":0,"$a0":0,"$a1":0,"$a2":0,"$a3":0,"$t0":0,"$t1":0,"$t2":0,"$t3":0,"$t4":0,
+    "$t5":0, "$t6":0,"$t7":0,"$s0":0,"$s1":0,"$s2":0,"$s3":0,"$s4":0,"$s5":0,"$s6":0,"$s7":0,"$t8":0,"$t9":0,"$k0":0,"$k1":0,
+    "$gp":0,"$sp":0,"$fp": 0,"$ra":0
+}
 def improveInstructions(Instructions):
     pc = 0
     temp = []
@@ -125,6 +130,8 @@ def InstructionDecode(inst):
     # arguments will depend upon instType
     # 1. add,sub,mul,div
     if instType == "add" or instType == "sub" or instType == "mul" or instType == "div" or instType == 'addi' or instType == 'subi':
+        if len(arr) != 3:
+            return -2, -2
         if instType != "addi":
             try:
                 for reg in arr:
@@ -140,11 +147,10 @@ def InstructionDecode(inst):
                         int(reg)
             except:
                 return -1, -1
+        return execution(instType, arr)
+    elif instType == "and" or instType == "or" or instType == "sll" or instType == "srl" or instType == "andi":
         if len(arr) != 3:
             return -2, -2
-        else:
-            return execution(instType, arr)
-    elif instType == "and" or instType == "or" or instType == "sll" or instType == "srl" or instType == "andi":
         if instType == "and" or instType == "or":
             try:
                 for reg in arr:
@@ -161,11 +167,10 @@ def InstructionDecode(inst):
             except:
                 return -1, -1
 
+        return execution(instType, arr)
+    elif instType == "beq" or instType == "bne":
         if len(arr) != 3:
             return -2, -2
-        else:
-            return execution(instType, arr)
-    elif instType == "beq" or instType == "bne":
         try:
             for reg in arr:
                 if reg != arr[-1]:
@@ -175,10 +180,7 @@ def InstructionDecode(inst):
         except:
             return -1, -1
 
-        if len(arr) != 3:
-            return -2, -2
-        else:
-            return execution(instType, arr)
+        return execution(instType, arr)
     elif instType == "lw" or instType == "sw":
         if inst.find('(') == -1:
             return -1, -1
@@ -213,24 +215,22 @@ def InstructionDecode(inst):
     elif instType == "jr":
         return execution(instType, ["$ra"])
     elif instType == 'j':
+        if len(arr) != 1:
+            return -2, -2
         try:
             Addres[arr[0]]
         except:
             return -1, -1
-        if len(arr) != 1:
-            return -2, -2
-        else:
-            return execution(instType, arr)
+        return execution(instType, arr)
     elif instType == 'li':
+        if len(arr) != 2:
+            return -2, -2
         try:
             int(arr[1])
             Register[arr[0]]
         except:
             return -1, -1
-        if len(arr) != 2:
-            return -2, -2
-        else:
-            return execution(instType, arr)
+        return execution(instType, arr)
     elif instType == 'la' or instType == "move" or instType == "lui":
         if instType == "move":
             try:
@@ -239,6 +239,8 @@ def InstructionDecode(inst):
             except:
                 return -1, -1
         elif instType == "la":
+            if len(arr) != 2:
+                return -2, -2
             try:
                 Register[arr[0]]
 
@@ -251,10 +253,7 @@ def InstructionDecode(inst):
                 int(arr[1])
             except:
                 return -1, -1
-        if len(arr) != 2:
-            return -2, -2
-        else:
-            return execution(instType, arr)
+        return execution(instType, arr)
     elif instType == "slt":
         try:
             Register[arr[0]]
@@ -270,6 +269,8 @@ def InstructionDecode(inst):
 
 def execution(instruct, reqRegisters):
     global PC
+    if instruct!="sw" and instruct!="syscall":
+        change(reqRegisters[0])
     if (instruct == "add"):
         if len(reqRegisters) == 3:
             temp = int(Register[reqRegisters[1]], 16) + \
@@ -401,18 +402,35 @@ def writeBack(instructType, reqRegisters, temp):
         Register[reqRegisters[0]] = hex(temp)
     if instructType == "syscall":
         if (int(Register['$v0'], 16) == 1):
-            values = list(MemAddres.values())
-            position = values.index(int(Register['$a0'], 16))
+          values = list(MemAddres.values())
+          position = values.index(int(Register['$a0'], 16))
+          if position+1<len(values):
             for i in range(0, values[position + 1] - values[position]):
                 print(int(dataSegment[int(Register['$a0'], 16) + i], 16), end=" ")
             print()
+          else:
+             i=0
+             while(dataSegment[int(Register['$a0'], 16) + i]!=0):
+                print(int(dataSegment[int(Register['$a0'], 16) + i], 16), end=" ")
+                i+=1
+             print()
             # write try and catch for this...
         elif (int(Register['$v0'], 16) == 4):
-            values = list(MemAddres.values())
-            position = values.index(int(Register['$a0'], 16))
+          values = list(MemAddres.values())
+          position = values.index(int(Register['$a0'], 16))
+          if position + 1 < len(values):
             for i in range(0, values[position+1]-values[position]):
                 print(dataSegment[int(Register['$a0'], 16)+i], end="")
             print()
+          else:
+              i=0
+              while (dataSegment[int(Register['$a0'], 16) + i]!= 0):
+                  print(dataSegment[int(Register['$a0'], 16) + i], end="")
+                  i+=1
+              print()
+
+def change(register):
+    changedRegisters[register]=1
 
 def printRegisters():
     print("----------------------------------")
@@ -471,11 +489,109 @@ def printDataSegment():
         #print("\n",m,"\n")
     print("--------------------------------------------------")
 
+
+class Table:
+
+    def __init__(self,root):
+        for i in range(1):
+            """
+           self.e = Entry(root, width=51, fg='black',
+                       font=('Arial', 10, 'bold'))
+           self.e.grid(row=i+1, column=0)
+           self.e.configure(background="light blue")
+           self.e.insert(END, " ")
+           self.e = Entry(root, width=51, fg='black',
+                          font=('Arial', 10, 'bold'))
+           self.e.grid(row=i+1, column=1)
+           self.e.configure(background="light blue")
+           self.e.insert(END, " ")
+           """
+        self.e = Entry(root, width=45, fg='black',
+                       font=('Arial', 10, 'bold'))
+        self.e.grid(row=i+2, column=0)
+        printPC="PC = "+str(PC)
+        self.e.insert(END,printPC)
+        keys = list(Register.keys())
+        values = list(Register.values())
+        values1 = list(changedRegisters.values())
+        # code for creating table
+        for i in range(32):
+            for j in range(2):
+              if i==0:
+                  self.e = Entry(root, width=51, fg='black',
+                                 font=('Arial', 10, 'bold'))
+                  if j == 0:
+                      self.e.grid(row=4, column=0 )
+                      self.e.insert(END,"REGISTERS" )
+                  if j == 1:
+                      self.e.grid(row=4 , column=1)
+                      self.e.insert(END, "VALUES")
+
+              self.e = Entry(root, width=51, fg='black',
+                               font=('Arial',10,'bold'))
+              if values1[i]==1:
+               if j==0:
+                self.e.grid(row=i+5, column=0)
+                self.e.configure(background="yellow")
+                self.e.insert(END,keys[i])
+               if j==1:
+                self.e.grid(row=i +5, column=1)
+                self.e.configure(background="yellow")
+                self.e.insert(END, values[i][2:])
+              else:
+                  if j == 0:
+                      self.e.grid(row=i+5, column=0)
+                      self.e.insert(END, keys[i])
+                  if j == 1:
+                      self.e.grid(row=i +5, column=1)
+                      self.e.insert(END, values[i][2:])
+
+class Table1:
+    def __init__(self,root):
+        #"""
+        self.e = Entry(root, width=20, fg='black',
+                       font=('Arial', 10, 'bold'))
+        self.e.configure(background="light blue")
+        self.e.grid(row=41, column=3)
+        #self.e.insert(END, "")
+        i=-1
+        #"""
+        #"""
+        while 1:
+        #for i in range(1000):
+          if i==-1:
+           self.e = Entry(root, width=25, fg='black',
+                       font=('Arial', 10, 'bold'))
+           self.e.grid(row=(i)+2, column=4)
+           self.e.insert(END, "DATA SEGMENT ")
+           i+=1
+          elif dataSegment[i]!=0:
+          #else:
+              self.e = Entry(root, width=25, fg='black',
+                             font=('Arial', 10, 'bold'))
+              self.e.grid(row= (i%37)+2, column=i//37+4)
+              self.e.insert(END,dataSegment[i])
+              i+=1
+          else:
+              break
+             # """
+
+"""
+total_rows = len(Register)
+total_columns = 2
+root = Tk()
+t = Table(root)
+root.mainloop()
 #print(dataSegment)
 #print(MemAddres)
 j=input("Enter 1 if you want to run the whole code at a time.\nEnter 2 if you want to print the code step by step.\n")
 if j=='1':
- while 1:
+"""
+def press(num):
+ global PC
+ j=num
+ if num=='1' and PC<len(Instructions):
+  while 1:
     if PC == len(Instructions):
         break
     inst = Instructions[PC]
@@ -487,32 +603,37 @@ if j=='1':
     #for i in range(0, indx+10):
     #    print(dataSegment[i], end=" ")
     #print()
+    #print(ans)
     if ans == (-2, -2):
-        print("TOO LESS ARGUMENTS ERROR OCCURRED IN LINE : ",
-              PC, " INSTRUCTION : \"", inst, "\"")
-        break
+     #   print("TOO LESS ARGUMENTS ERROR OCCURRED IN LINE : ",
+     #         PC, " INSTRUCTION : \"", inst, "\"")
+         root = Tk()
+         root.geometry("500x300")
+         root.title("ERROR")
+         toPrint=("TOO LESS ARGUMENTS ERROR OCCURRED IN LINE : "+str(PC)+" INSTRUCTION : \""+ inst+ "\"")
+         label = Label(root, text=toPrint).pack()
+         break
     elif ans == (-1, -1):
-        print("SYNTAX ERROR OCCURRED IN LINE : ",
-              PC, " INSTRUCTION : \"", inst, "\"")
+        root = Tk()
+        root.geometry("500x300")
+        root.title("ERROR")
+        toPrint = ("SYNTAX ERROR OCCURRED IN LINE : " + str(PC) + " INSTRUCTION : \"" + inst + "\"")
+        label = Label(root, text=toPrint).pack()
         break
     elif ans == "BREAK":
         break
- printRegisters()
- #print(dataSegment)
- print()
- print()
- printDataSegment()
- print()
- print()
-elif j == '2':
-        flag = True
-        j = input("Enter 1 if you want to run first instruction.\nEnter 2 if you want to end the code.\n")
-        if j=='2':
-            flag=False
-            print("The code has ended")
-        while flag:
-            if PC == len(Instructions):
-                break
+  t = Table(gui)
+  t1 = Table1(gui)
+  gui.mainloop()
+  #printRegisters()
+  #print(dataSegment)
+  #print()
+  #print()
+  #printDataSegment()
+  #print()
+  #print()
+ elif num == '2':
+     if PC<len(Instructions):
             inst = Instructions[PC]
             # print(inst)
             ans = InstructionFetch(inst)
@@ -523,30 +644,54 @@ elif j == '2':
             #    print(dataSegment[i], end=" ")
             # print()
             if ans == (-2, -2):
-                print("TOO LESS ARGUMENTS ERROR OCCURRED IN LINE : ",
-                      PC, " INSTRUCTION : \"", inst, "\"")
-                break
+              #   print("TOO LESS ARGUMENTS ERROR OCCURRED IN LINE : ",
+              #        PC, " INSTRUCTION : \"", inst, "\"")
+              root = Tk()
+              root.geometry("500x300")
+              root.title("ERROR")
+              toPrint = ("TOO LESS ARGUMENTS ERROR OCCURRED IN LINE : " + str(PC) + " INSTRUCTION : \"" + inst + "\"")
+              label = Label(root, text=toPrint).pack()
             elif ans == (-1, -1):
-                print("SYNTAX ERROR OCCURRED IN LINE : ",
-                      PC, " INSTRUCTION : \"", inst, "\"")
-                break
+             #   print("SYNTAX ERROR OCCURRED IN LINE : ",
+             #         PC, " INSTRUCTION : \"", inst, "\"")
+             root = Tk()
+             root.geometry("500x300")
+             root.title("ERROR")
+             toPrint = ("SYNTAX ERROR OCCURRED IN LINE : " + str(PC) + " INSTRUCTION : \"" + inst + "\"")
+             label = Label(root, text=toPrint).pack()
             elif ans == "BREAK":
-                break
-            printRegisters()
-            print()
-            print()
-            printDataSegment()
-            print()
-            print()
+                PC=len(Instructions)
+            #printRegisters()
+            #print()
+            #print()
+            #printDataSegment()
+            #print()
+            #print()
             #print(dataSegment)
+            t = Table(gui)
+            t1 = Table1(gui)
+            gui.mainloop()
+            #printRegisters()
             if PC == len(Instructions):
-                break
-            j = input("Enter 1 if you want to run the next instruction.\nEnter 2 if you want to end the code.\n")
-            if j == '2':
-                flag = False
+               return
     # for (key, value) in Register.items():
     #     print(key, value)
 #print(Register)
 #print()
 #for i in range(0, indx+10):
 #    print(dataSegment[i], end=" ")
+#if __name__ == "__main__":
+gui = Tk()
+gui.configure(background="light blue")
+gui.title("BYTIFY")
+gui.geometry("1500x1300")
+equation = StringVar()
+onestep = Button(gui, text='ONE STEP EXECUTION', fg='black', bg='pink',
+				command=lambda: press('1'), height=1, width=40)
+onestep.grid(row=0, column=0)
+stepbystep= Button(gui, text='STEP BY STEP EXECUTION', fg='black', bg='pink',
+					command=lambda: press('2'), height=1, width=40)
+stepbystep.grid(row=0, column=1)
+t = Table(gui)
+t1 = Table1(gui)
+gui.mainloop()
