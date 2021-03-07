@@ -1,72 +1,61 @@
-# int leaf_example (int g, int h, int i, int j)
-# {
-#   int f;
-#   f = (g + h) – (i + j);
-#   return f;
-# }
 .data
-.word  1,2,3,4
-MSG1:  .asciiz "Give values of g,h,i,j to find value of (g+h)-(i+j)\n" 
-MSG2:  .asciiz "Answer -> "
+array:
+    .word 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1   	#initial array
+PrintArray: .asciiz "Final Sorted Array is\n"
+
+PrintSpace: .asciiz " "
+
 .text
 .globl main
 
 main:
-      lui   $s0, 0
-load:
-      lw		$a0, 0($s0)		 # Loading g
-      lw    $a1, 4($s0)              # Loading h
-      lw    $a2, 8($s0)              # Loading i
-      lw    $a3, 12($s0)             # Loading j
-      j		leaf_example	 # jump to leaf_example and save position to $ra
- hue:     move 	$s1, $v0		       # storing value in other register
-      sw		$s1, 16($s0)       # storing back the result value
-      jr		$ra					# jump to $ra
-      
-      
+    	lui   $s0 , 0 			#save first address of array
+    	li    $s1 , 1      			#just one to check for equality  
+    	li    $t0 , 0      			#act like my first loop incrementing register 
+    	li    $t1 , 0      			#act like my second loop incrementing register
+    	li    $t2 , 10     			#total times first loop works
+    	li    $t3 , 10     			#total times second loop works = 11 - $t2 for every iteration 
+FirstLoop:  
+        li    $t1 , 0           		#initialize the inner loop counter (j) 
+        
+SecondLoop:
+        
+        lw    $t4 , 0($s0)            		# contains a[j]
+        lw    $t5 , 4($s0)            		# contains a[j+1] where j>=0
+        slt   $s3 , $t5 , $t4         		# $s3 is one if a[j]>a[j+1] 
+        beq   $s3 , $s1 , SWAP        		# Go to swap
+After:  addi  $s0 , $s0 , 4                 		# assigned After to jump back from swap to here
+        addi  $t1 , $t1 , 1           		# incrementing the counter
+        bne   $t1 , $t3 , SecondLoop  		# second loop condition check
+        addi  $t3 , $t3 , -1          		# decrementing $t3 count so that in next iteration counter 
+                                      		# does not goes till end
+        lui   $s0 , 0            		# reinitillize the starting address 
+        addi  $t0 , $t0 , 1           		# incrementing first loops counter
+        bne   $t0 , $t2 , FirstLoop   		# condition check for First loop
 
-leaf_example: 
-      # though t0,t1,t2 are not used, just for practice we are doing it
-      addi  $sp, $sp, -12			# $sp = $sp - 12 , decrementing stack pointer
-      sw		$t0, 0($sp)		      # temp store value of registers
-      sw    $t1, 4($sp)                   # temp store value of registers
-      sw    $t2, 8($sp)                   # temp store value of registers
-      add   $t0, $a0 , $a1                # g+h
-      add   $t1, $a2 , $a3                # i+j
-      sub		$t2, $t0, $t1		# (g+h)-(i+j)
-      move 	$v0, $t2		            # $v0 = $t2
-      lw    $t0, 0($sp)                   # loading back the old values
-      lw    $t1, 4($sp)                   # loading back the old values
-      lw    $t2, 8($sp)                   # loading back the old values
-      addi  $sp , $sp , 12                # increasing the stack pointer to normal
-      j		hue				# jump to $ra(return)
-      
+PrintResult:                          		# code to print the sorted array and finish execution
+        li      $v0 , 4
+        la      $a0 , PrintArray
+        syscall
+        li      $v0 , 1
+        li      $t0 , 0
+        lui     $s0 , 0
+        lw      $s1 , 0($s0)
+        move    $a0 , $s1
+Loop:   syscall
+        li      $v0 , 4
+        la      $a0 , PrintSpace
+        syscall                                 # printing space
+        li      $v0 , 1
+        addi    $s0 , 4
+        addi    $t0 , 1
+        lw      $s1 , 0($s0)
+        move    $a0 , $s1
+        bne     $t0 , $t2 , Loop
+        jr $ra        
 
-print:
-      li   $v0 , 4
-      la   $a0 , MSG2
-      syscall
-      li		$v0 , 1
-      move  $a0 , $s1
-      syscall
-      jr		$ra				# jump to $ra
-      
-      
-      
-take_input:
-      li   $v0 , 4
-      la   $a0 , MSG1
-      syscall
-      li   $v0 , 5                        # input taking and storing back
-      syscall 
-      sw		$v0, 0($s0)	
-      li   $v0 , 5	     
-      syscall
-      sw		$v0, 4($s0)
-      li   $v0 , 5		     
-      syscall
-      sw		$v0, 8($s0)
-      li   $v0 , 5		     
-      syscall
-      sw		$v0, 12($s0)		      
-      j     load
+
+SWAP:                                          # swap code
+      sw   $t4  , 4($s0)
+      sw   $t5  , 0($s0)
+      j    After                               # jump back to initial position

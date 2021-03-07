@@ -31,17 +31,6 @@ def FillMemory(data, dataSegment, MemAddres):
             last = a.find('"')
             final = dta[first+1:first+last+1]
             get = [final[i:i + 4] for i in range(0, len(final), 4)]
-
-            if len(get[-1]) < 4:
-                if len(get[-1]) == 1:
-                    get[-1] += "000000"
-
-                elif len(get[-1]) == 2:
-                    get[-1] += "0000"
-
-                elif len(get[-1]) == 3:
-                    get[-1] += "00"
-
             for i in range(0, len(get)):
                 dataSegment[indx] = get[i]
                 indx += 1
