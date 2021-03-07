@@ -378,7 +378,7 @@ def mem(instructType, reqRegisters, temp):
     global PC
     if(len(reqRegisters) == 4):
         if(reqRegisters[3] == "lw"):
-            print(type(dataSegment[temp//4]))
+            #print(type(dataSegment[temp//4]))
             if(type(dataSegment[temp//4]) == int):
                 Register[reqRegisters[0]] = hex(dataSegment[temp//4])
             else:
@@ -404,8 +404,7 @@ def writeBack(instructType, reqRegisters, temp):
             values = list(MemAddres.values())
             position = values.index(int(Register['$a0'], 16))
             for i in range(0, values[position + 1] - values[position]):
-                print(
-                    int(dataSegment[int(Register['$a0'], 16) + i], 16), end=" ")
+                print(int(dataSegment[int(Register['$a0'], 16) + i], 16), end=" ")
             print()
             # write try and catch for this...
         elif (int(Register['$v0'], 16) == 4):
@@ -414,21 +413,80 @@ def writeBack(instructType, reqRegisters, temp):
             for i in range(0, values[position+1]-values[position]):
                 print(dataSegment[int(Register['$a0'], 16)+i], end="")
             print()
+
+def printRegisters():
+    print("----------------------------------")
+    print("|    REGISTERS    |     VALUE    |")
+    keys = list(Register.keys())
+    values = list(Register.values())
+    print("|      $zero      |       0      |")
+    for j in range(1,32):
+ #       print("|      ",keys[j],"      |       ",values[j][2:],"      |")
+       #  print("|      ", keys[j], "      |       ", values[j], "      |")
+        m=len(values[j])
+        n=16-m
+        if n%2==0:
+            print("|      ", keys[j], "      |",end="")
+            for i in range(0,n//2):
+                print(" ",end="")
+            print(values[j][2:],end="")
+            for i in range(0,n//2):
+                print(" ",end="")
+            print("|",end="")
+        else:
+             print("|      ", keys[j], "      |",end="")
+             for i in range(0, n // 2+1):
+                  print(" ",end="")
+             print(values[j][2:],end="")
+             for i in range(0, n // 2):
+                  print(" ",end="")
+             print("|",end="")
+        print()
+    print("----------------------------------")
+
+def printDataSegment():
+    print("--------------------------------------------------")
+    #print("------------------DATA SEGMENT--------------------")
+    print("|                 DATA SEGMENT                   |")
+    m=0
+    j=0
+    while 1:
+        if m==0:
+            print("|",end="")
+        if dataSegment[j]==0:
+            for k in range(m, 48):
+                print(" ", end="")
+            print("|")
+            break
+        else:
+          if len(dataSegment[j])+m > 47:
+              for k in range(m,48):
+                  print(" ",end="")
+              print("|")
+              m=0
+          else:
+              print(dataSegment[j],end=" ")
+              m = m + len(dataSegment[j]) +1
+              j+=1
+        #print("\n",m,"\n")
+    print("--------------------------------------------------")
+
 #print(dataSegment)
 #print(MemAddres)
-while 1:
-
+j=input("Enter 1 if you want to run the whole code at a time.\nEnter 2 if you want to print the code step by step.\n")
+if j=='1':
+ while 1:
     if PC == len(Instructions):
         break
     inst = Instructions[PC]
     #print(inst)
     ans = InstructionFetch(inst)
 
-    print(Register)
-    print()
-    for i in range(0, indx+10):
-        print(dataSegment[i], end=" ")
-    print()
+    #print(Register)
+    #print()
+    #for i in range(0, indx+10):
+    #    print(dataSegment[i], end=" ")
+    #print()
     if ans == (-2, -2):
         print("TOO LESS ARGUMENTS ERROR OCCURRED IN LINE : ",
               PC, " INSTRUCTION : \"", inst, "\"")
@@ -439,9 +497,56 @@ while 1:
         break
     elif ans == "BREAK":
         break
+ printRegisters()
+ #print(dataSegment)
+ print()
+ print()
+ printDataSegment()
+ print()
+ print()
+elif j == '2':
+        flag = True
+        j = input("Enter 1 if you want to run first instruction.\nEnter 2 if you want to end the code.\n")
+        if j=='2':
+            flag=False
+            print("The code has ended")
+        while flag:
+            if PC == len(Instructions):
+                break
+            inst = Instructions[PC]
+            # print(inst)
+            ans = InstructionFetch(inst)
+
+            # print(Register)
+            # print()
+            # for i in range(0, indx+10):
+            #    print(dataSegment[i], end=" ")
+            # print()
+            if ans == (-2, -2):
+                print("TOO LESS ARGUMENTS ERROR OCCURRED IN LINE : ",
+                      PC, " INSTRUCTION : \"", inst, "\"")
+                break
+            elif ans == (-1, -1):
+                print("SYNTAX ERROR OCCURRED IN LINE : ",
+                      PC, " INSTRUCTION : \"", inst, "\"")
+                break
+            elif ans == "BREAK":
+                break
+            printRegisters()
+            print()
+            print()
+            printDataSegment()
+            print()
+            print()
+            #print(dataSegment)
+            if PC == len(Instructions):
+                break
+            j = input("Enter 1 if you want to run the next instruction.\nEnter 2 if you want to end the code.\n")
+            if j == '2':
+                flag = False
     # for (key, value) in Register.items():
     #     print(key, value)
-
-print()
-for i in range(0, indx+10):
-    print(dataSegment[i], end=" ")
+#print(Register)
+#print()
+#for i in range(0, indx+10):
+#    print(dataSegment[i], end=" ")
