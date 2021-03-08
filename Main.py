@@ -402,39 +402,76 @@ def writeBack(instructType, reqRegisters, temp):
     if instructType == "add" or instructType == "sub" or instructType == "subi" or instructType == "mul" or instructType == "div" or instructType == "addi" or instructType == "and" or instructType == "or" or instructType == "not" or instructType == "li" or instructType == "lui" or instructType == "la" or instructType == "move" or instructType == "srl" or instructType == "sll" or instructType == "andi":
         Register[reqRegisters[0]] = hex(temp)
     if instructType == "syscall":
-        if (int(Register['$v0'], 16) == 1):
-            values = list(MemAddres.values())
-            position = values.index(int(Register['$a0'], 16))
-            if position+1 < len(values):
-                for i in range(0, values[position + 1] - values[position]):
-                    print(
-                        int(dataSegment[int(Register['$a0'], 16) + i], 16), end=" ")
-                print()
-            else:
-                i = 0
-                while(dataSegment[int(Register['$a0'], 16) + i] != 0):
-                    print(
-                        int(dataSegment[int(Register['$a0'], 16) + i], 16), end=" ")
-                    i += 1
-                print()
-                # write try and catch for this...
-        elif (int(Register['$v0'], 16) == 4):
-            values = list(MemAddres.values())
-            position = values.index(int(Register['$a0'], 16))
-            if position + 1 < len(values):
-                for i in range(0, values[position+1]-values[position]):
-                    print(dataSegment[int(Register['$a0'], 16)+i], end="")
-                print()
-            else:
-                i = 0
-                while (dataSegment[int(Register['$a0'], 16) + i] != 0):
-                    print(dataSegment[int(Register['$a0'], 16) + i], end="")
-                    i += 1
-                print()
+        lastInstruct = Instructions[PC-2]
+        lastInstruct = list(lastInstruct.split())
+        # print(lastInstruct[0])
+        if lastInstruct[0] == 'la':
+            if (int(Register['$v0'], 16) == 1):
+                values = list(MemAddres.values())
+                position = values.index(int(Register['$a0'], 16))
+                if position+1 < len(values):
+                    toPrint = ""
+                    for i in range(0, values[position + 1] - values[position]):
+                        print(
+                            int(dataSegment[int(Register['$a0'], 16) + i], 16), end=" ")
+                        toPrint = toPrint + \
+                            str(int(
+                                dataSegment[int(Register['$a0'], 16) + i], 16))+" "
+                    #toPrint += "\n"
+                    label = Label(console, text=toPrint).pack()
+                    print()
+                else:
+                    i = 0
+                    toPrint = ""
+                    while(dataSegment[int(Register['$a0'], 16) + i] != 0):
+                        print(
+                            int(dataSegment[int(Register['$a0'], 16) + i], 16), end=" ")
+                        toPrint = toPrint + \
+                            str(int(
+                                dataSegment[int(Register['$a0'], 16) + i], 16))+" "
+                        i += 1
+                    #toPrint += "\n"
+                    label = Label(console, text=toPrint).pack()
+                    print()
+                    # write try and catch for this...
+            elif (int(Register['$v0'], 16) == 4):
+                toPrint = ""
+                values = list(MemAddres.values())
+                position = values.index(int(Register['$a0'], 16))
+                if position + 1 < len(values):
+                    for i in range(0, values[position+1]-values[position]):
+                        print(dataSegment[int(Register['$a0'], 16)+i], end="")
+                        toPrint = toPrint + \
+                            dataSegment[int(Register['$a0'], 16)+i]
+                    #toPrint += "\n"
+                    label = Label(console, text=toPrint).pack()
+                    print()
+                else:
+                    i = 0
+                    toPrint = ""
+                    while (dataSegment[int(Register['$a0'], 16) + i] != 0):
+                        print(
+                            dataSegment[int(Register['$a0'], 16) + i], end="")
+                        toPrint = toPrint + \
+                            dataSegment[int(Register['$a0'], 16) + i]
+                        i += 1
+                    # toPrint+="\n"
+                    label = Label(console, text=toPrint).pack()
+                    print()
+        else:
+            print(int(Register["$a0"], 16))
+            toPrint = str(int(Register["$a0"], 16))
+            label = Label(console, text=toPrint).pack()
 
 
 def change(register):
     changedRegisters[register] = 1
+
+
+def restoreRegisters():
+    keys = list(Register.keys())
+    for j in range(0, 32):
+        changedRegisters[keys[j]] = 0
 
 
 def printRegisters():
@@ -445,7 +482,7 @@ def printRegisters():
     print("|      $zero      |       0      |")
     for j in range(1, 32):
      #       print("|      ",keys[j],"      |       ",values[j][2:],"      |")
-       #  print("|      ", keys[j], "      |       ", values[j], "      |")
+        #  print("|      ", keys[j], "      |       ", values[j], "      |")
         m = len(values[j])
         n = 16-m
         if n % 2 == 0:
@@ -551,6 +588,7 @@ class Table:
                     if j == 1:
                         self.e.grid(row=i + 5, column=1)
                         self.e.insert(END, values[i][2:])
+        restoreRegisters()
 
 
 class Table1:
@@ -710,4 +748,12 @@ stepbystep = Button(gui, text='STEP BY STEP EXECUTION', fg='white', bg='black',
 stepbystep.grid(row=0, column=1)
 t = Table(gui)
 t1 = Table1(gui)
+console = Tk()
+#GUIFrame =Frame(console)
+#GUIFrame.pack(expand=True, anchor=S)
+#console.minsize(width=350, height=325)
+#self.Button2 = Button(parent, text='exit', command= parent.quit)
+#self.Button2.place(x=25, y=300)
+# console.geometry("900x600")
+console.title("Console")
 gui.mainloop()
