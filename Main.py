@@ -330,7 +330,7 @@ def execution(instruct, reqRegisters):
     elif (instruct == "beq"):
         if Register[reqRegisters[0]] == Register[reqRegisters[1]]:
             PC = Addres[reqRegisters[2]]
-            print(Instructions[PC])
+            # print(Instructions[PC])
             return mem(instruct, reqRegisters, True)
         else:
             return mem(instruct, reqRegisters, False)
@@ -399,7 +399,7 @@ def mem(instructType, reqRegisters, temp):
 
 def writeBack(instructType, reqRegisters, temp):
     global PC
-    if instructType == "add" or instructType == "sub" or instructType == "subi" or instructType == "mul" or instructType == "div" or instructType == "addi" or instructType == "and" or instructType == "or" or instructType == "not" or instructType == "li" or instructType == "lui" or instructType == "la" or instructType == "move" or instructType == "srl" or instructType == "sll" or instructType == "andi":
+    if instructType == "add" or instructType == "sub" or instructType == "subi" or instructType == "mul" or instructType == "div" or instructType == "addi" or instructType == "and" or instructType == "or" or instructType == "not" or instructType == "li" or instructType == "lui" or instructType == "la" or instructType == "move" or instructType == "srl" or instructType == "sll" or instructType == "andi" or instructType == "slt":
         Register[reqRegisters[0]] = hex(temp)
     if instructType == "syscall":
         lastInstruct = Instructions[PC-2]
@@ -643,7 +643,6 @@ def press(num):
             if PC == len(Instructions):
                 break
             inst = Instructions[PC]
-            # print(inst)
             ans = InstructionFetch(inst)
 
             # print(Register)
@@ -675,13 +674,6 @@ def press(num):
         t = Table(gui)
         t1 = Table1(gui)
         gui.mainloop()
-        # printRegisters()
-        # print(dataSegment)
-        # print()
-        # print()
-        # printDataSegment()
-        # print()
-        # print()
     elif num == '2':
         if PC < len(Instructions):
             inst = Instructions[PC]
