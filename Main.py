@@ -698,14 +698,14 @@ def press(num):
 #    print(dataSegment[i], end=" ")
 # if __name__ == "__main__":
 gui = Tk()
-gui.configure(background="light blue")
+gui.configure(background="light green")
 gui.title("BYTIFY")
 gui.geometry("1500x1300")
 equation = StringVar()
-onestep = Button(gui, text='ONE STEP EXECUTION', fg='black', bg='pink',
+onestep = Button(gui, text='ONE STEP EXECUTION', fg='white', bg='black',
                  command=lambda: press('1'), height=1, width=40)
 onestep.grid(row=0, column=0)
-stepbystep = Button(gui, text='STEP BY STEP EXECUTION', fg='black', bg='pink',
+stepbystep = Button(gui, text='STEP BY STEP EXECUTION', fg='white', bg='black',
                     command=lambda: press('2'), height=1, width=40)
 stepbystep.grid(row=0, column=1)
 t = Table(gui)
