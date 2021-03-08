@@ -1,6 +1,6 @@
 # Bytify
 
-The project mainly focus on building a **Assembly language emulator** with **MIPS** architecture.
+The project mainly focus on building a **Assembly language simulator** with **MIPS** architecture.
 
 ## Function support in phase 1
 
