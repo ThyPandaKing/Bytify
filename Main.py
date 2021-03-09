@@ -1,10 +1,12 @@
 import InputFile as InputFile
 import memorySegment as FillMemory
 from tkinter import *
+from tkinter import font as tkFont
 
 Addres = {}
 MemAddres = {}
 PC = 0
+lastinstruction=0
 
 dataSegment = 1024*[0]
 
@@ -85,6 +87,8 @@ indx = FillMemory.FillMemory(Data, dataSegment, MemAddres)
 def InstructionFetch(inst):
  #   inst = Instructions[PC]
     global PC
+    global lastinstruction
+    lastinstruction=inst
     inst = inst
     PC = PC + 1
     if inst == "":
@@ -554,6 +558,13 @@ class Table:
         self.e.grid(row=i+2, column=0)
         printPC = "PC = "+str(PC)
         self.e.insert(END, printPC)
+        #"""
+        self.e = Entry(root, width=50, fg='black',
+                       font=('Arial', 10, 'bold'))
+        self.e.grid(row=i + 4, column=0)
+        printPC = "Executed Instruction = " + str(lastinstruction)
+        self.e.insert(END, printPC)
+        #"""
         keys = list(Register.keys())
         values = list(Register.values())
         values1 = list(changedRegisters.values())
@@ -564,29 +575,29 @@ class Table:
                     self.e = Entry(root, width=51, fg='black',
                                    font=('Arial', 10, 'bold'))
                     if j == 0:
-                        self.e.grid(row=4, column=0)
+                        self.e.grid(row=6, column=0)
                         self.e.insert(END, "REGISTERS")
                     if j == 1:
-                        self.e.grid(row=4, column=1)
+                        self.e.grid(row=6, column=1)
                         self.e.insert(END, "VALUES")
 
                 self.e = Entry(root, width=51, fg='black',
                                font=('Arial', 10, 'bold'))
                 if values1[i] == 1:
                     if j == 0:
-                        self.e.grid(row=i+5, column=0)
+                        self.e.grid(row=i+7, column=0)
                         self.e.configure(background="yellow")
                         self.e.insert(END, keys[i])
                     if j == 1:
-                        self.e.grid(row=i + 5, column=1)
+                        self.e.grid(row=i + 7, column=1)
                         self.e.configure(background="yellow")
                         self.e.insert(END, values[i][2:])
                 else:
                     if j == 0:
-                        self.e.grid(row=i+5, column=0)
+                        self.e.grid(row=i+7, column=0)
                         self.e.insert(END, keys[i])
                     if j == 1:
-                        self.e.grid(row=i + 5, column=1)
+                        self.e.grid(row=i + 7, column=1)
                         self.e.insert(END, values[i][2:])
         restoreRegisters()
 
@@ -596,7 +607,7 @@ class Table1:
         # """
         self.e = Entry(root, width=20, fg='black',
                        font=('Arial', 10, 'bold'))
-        self.e.configure(background="light blue")
+        self.e.configure(background="light green")
         self.e.grid(row=41, column=3)
         #self.e.insert(END, "")
         i = -1
@@ -732,10 +743,11 @@ gui.configure(background="light green")
 gui.title("BYTIFY")
 gui.geometry("1500x1300")
 equation = StringVar()
-onestep = Button(gui, text='ONE STEP EXECUTION', fg='white', bg='black',
+boldFont = tkFont.Font (size = 10, weight = "bold")
+onestep = Button(gui, text='ONE STEP EXECUTION', fg='white', bg='black',font = boldFont,
                  command=lambda: press('1'), height=1, width=40)
 onestep.grid(row=0, column=0)
-stepbystep = Button(gui, text='STEP BY STEP EXECUTION', fg='white', bg='black',
+stepbystep = Button(gui, text='STEP BY STEP EXECUTION', fg='white', bg='black',font = boldFont,
                     command=lambda: press('2'), height=1, width=40)
 stepbystep.grid(row=0, column=1)
 t = Table(gui)
@@ -746,6 +758,6 @@ console = Tk()
 #console.minsize(width=350, height=325)
 #self.Button2 = Button(parent, text='exit', command= parent.quit)
 #self.Button2.place(x=25, y=300)
-# console.geometry("900x600")
+#console.geometry("900x600")
 console.title("Console")
 gui.mainloop()
