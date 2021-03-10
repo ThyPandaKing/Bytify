@@ -640,7 +640,7 @@ class Table1:
       i = 0
       # """
       # """
-      ctr_right2 = Frame(ctr_right, bg='gray', width=50)
+      ctr_right2 = Frame(ctr_right, bg='white', width=0)
       ctr_right2.grid(row=1, column=0, sticky="ns")
       l1 = Label(ctr_right1, text="", width=35, anchor='w', bg='gray')  # added one Label
       l1.grid(row=0, column=0)
