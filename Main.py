@@ -2,6 +2,7 @@ import InputFile as InputFile
 import memorySegment as FillMemory
 from tkinter import *
 from tkinter import font as tkFont
+from tkinter import ttk
 
 Addres = {}
 MemAddres = {}
@@ -87,9 +88,16 @@ indx = FillMemory.FillMemory(Data, dataSegment, MemAddres)
 def InstructionFetch(inst):
  #   inst = Instructions[PC]
     global PC
+    global ctr_left1
+    global text
     global lastinstruction
-    lastinstruction=inst
-    inst = inst
+    k=str(str(PC+1)+'.0')
+    l=str(str(PC+1)+'.50')
+    text.tag_add("start",k, l)
+    text.tag_config("start", background="orange")
+    lastinstruction = inst
+    #l1 = Label(ctr_left, text=inst, width=50, anchor='w', bg="orange")  # added one Label
+    #l1.grid(row=PC+3, column=0)
     PC = PC + 1
     if inst == "":
         return
@@ -553,15 +561,21 @@ class Table:
            self.e.configure(background="light blue")
            self.e.insert(END, " ")
            """
+        l1 = Label(ctr_mid, text=" ", width=50, anchor='w', bg="light green")  # added one Label
+        l1.grid(row=2, column=0)
         self.e = Entry(root, width=45, fg='black',
                        font=('Arial', 10, 'bold'))
         self.e.grid(row=i+2, column=0)
         printPC = "PC = "+str(PC)
         self.e.insert(END, printPC)
         #"""
+        l1 = Label(ctr_mid, text=" ", width=50, anchor='w',bg="light green")  # added one Label
+        l1.grid(row=i+3, column=0)
         self.e = Entry(root, width=50, fg='black',
                        font=('Arial', 10, 'bold'))
         self.e.grid(row=i + 4, column=0)
+        l1 = Label(ctr_mid, text=" ", width=50, anchor='w', bg="light green")  # added one Label
+        l1.grid(row=i + 5, column=0)
         printPC = "Executed Instruction = " + str(lastinstruction)
         self.e.insert(END, printPC)
         #"""
@@ -603,34 +617,54 @@ class Table:
 
 
 class Table1:
-    def __init__(self, root):
-        # """
-        self.e = Entry(root, width=20, fg='black',
-                       font=('Arial', 10, 'bold'))
-        self.e.configure(background="light green")
-        self.e.grid(row=41, column=3)
-        #self.e.insert(END, "")
-        i = -1
-        # """
-        # """
-        while 1:
-            # for i in range(1000):
-            if i == -1:
-                self.e = Entry(root, width=25, fg='black',
-                               font=('Arial', 10, 'bold'))
-                self.e.grid(row=(i)+2, column=4)
-                self.e.insert(END, "DATA SEGMENT ")
-                i += 1
-            elif dataSegment[i] != 0:
-                # else:
-                self.e = Entry(root, width=25, fg='black',
-                               font=('Arial', 10, 'bold'))
-                self.e.grid(row=(i % 37)+2, column=i//37+4)
-                self.e.insert(END, dataSegment[i])
-                i += 1
-            else:
-                break
-            # """
+  def __init__(self, root):
+      """
+      treev = ttk.Treeview(root, selectmode='browse')
+      treev.pack(side='right')
+      verscrlbar = ttk.Scrollbar(root,
+                                 orient="vertical",
+                                 command=treev.yview)
+      verscrlbar.pack(side='right', fill='x')
+      treev.configure(xscrollcommand=verscrlbar.set)
+      treev["columns"] = ("1")
+      treev['show'] = 'headings'
+      treev.column("1", width=90, anchor='w')
+      treev.heading("1", text="Data Segment")
+      i=0
+      while dataSegment[i]!=0:
+        treev.insert("", 'end', text="L1",
+            values=(dataSegment[i]))
+        i+=1
+      """
+      # """
+      i = 0
+      # """
+      # """
+      ctr_right2 = Frame(ctr_right, bg='gray', width=50)
+      ctr_right2.grid(row=1, column=0, sticky="ns")
+      l1 = Label(ctr_right1, text="", width=35, anchor='w', bg='gray')  # added one Label
+      l1.grid(row=0, column=0)
+      self.e = Entry(ctr_right1, width=35, fg='black',
+                     font=('Arial', 10, 'bold'))
+      self.e.grid(row=1, column=0)
+      self.e.insert(END, "DATA SEGMENT ")
+      l1 = Label(ctr_right1, text="", width=35, anchor='w', bg='gray')  # added one Label
+      l1.grid(row=2, column=0)
+      h = Scrollbar(ctr_right2, orient='horizontal')
+      h.pack(side=BOTTOM, fill=X)
+      v = Scrollbar(ctr_right2)
+      v.pack(side=RIGHT, fill=Y)
+      text1 = Text(ctr_right2, width=35, height=40, wrap=NONE,
+                  xscrollcommand=h.set,
+                  yscrollcommand=v.set)
+      while(dataSegment[i]!=0):
+          inst = dataSegment[i]+ "\n"
+          text1.insert(END, inst)
+          i+=1
+      #tag_delete(tagname)
+      text1.pack(side=TOP)
+      h.config(command=text1.xview)
+      v.config(command=text1.yview)
 
 
 """
@@ -682,8 +716,8 @@ def press(num):
                 break
             elif ans == "BREAK":
                 break
-        t = Table(gui)
-        t1 = Table1(gui)
+        t = Table(ctr_mid)
+        t1 = Table1(ctr_right2)
         gui.mainloop()
     elif num == '2':
         if PC < len(Instructions):
@@ -723,8 +757,8 @@ def press(num):
             # print()
             # print()
             # print(dataSegment)
-            t = Table(gui)
-            t1 = Table1(gui)
+            t = Table(ctr_mid)
+            t1 = Table1(ctr_right2)
             gui.mainloop()
             # printRegisters()
             if PC == len(Instructions):
@@ -741,18 +775,61 @@ def press(num):
 gui = Tk()
 gui.configure(background="light green")
 gui.title("BYTIFY")
-gui.geometry("1500x1300")
+#gui.geometry("1500x1300")
 equation = StringVar()
 boldFont = tkFont.Font (size = 10, weight = "bold")
-onestep = Button(gui, text='ONE STEP EXECUTION', fg='white', bg='black',font = boldFont,
+console = Tk()
+center = Frame(gui, bg='black', width=50, padx=3, pady=3)
+gui.grid_rowconfigure(1, weight=1)
+gui.grid_columnconfigure(0, weight=1)
+
+center.grid(row=1, sticky="nsew")
+
+center.grid_rowconfigure(0, weight=1)
+center.grid_columnconfigure(1, weight=1)
+
+ctr_left = Frame(center, bg='light blue', width=50)
+ctr_left1= Frame(ctr_left, bg='light blue', width=50)
+
+ctr_left.grid(row=0, column=0, sticky="ns")
+ctr_left1.grid(row=1,column=0,sticky = "wens")
+
+l1 = Label(ctr_left, text='TEXT',width=30,bg='light pink',fg='black',font = boldFont)  # added one Label
+l1.grid(row=0, column=0)
+
+
+h = Scrollbar(ctr_left1, orient='horizontal')
+h.pack(side=BOTTOM, fill=X)
+v = Scrollbar(ctr_left1)
+v.pack(side=RIGHT, fill=Y)
+text = Text(ctr_left1, width=41,height=45, wrap=NONE,
+         xscrollcommand=h.set,
+         yscrollcommand=v.set)
+for j in range(0,len(Instructions)):
+    inst=Instructions[j]+"\n"
+    text.insert(END, inst)
+text.pack(side=TOP)
+h.config(command=text.xview)
+v.config(command=text.yview)
+
+ctr_mid = Frame(center, bg='light green', width=10)
+ctr_right = Frame(center, bg='gray', width=50)
+ctr_right1 = Frame(ctr_right, bg='gray', width=50)
+ctr_right2 = Frame(ctr_right, bg='gray', width=50)
+ctr_mid.grid(row=0,column=1, sticky="ns")
+ctr_right.grid(row=0 ,column=2, sticky="ns")
+ctr_right1.grid(row=0 ,column=0, sticky="ns")
+ctr_right2.grid(row=1 ,column=0, sticky="ns")
+t = Table(ctr_mid)
+t1 = Table1(ctr_right2)
+
+
+onestep = Button(ctr_mid, text='ONE STEP EXECUTION', fg='white', bg='black',font = boldFont,
                  command=lambda: press('1'), height=1, width=40)
 onestep.grid(row=0, column=0)
-stepbystep = Button(gui, text='STEP BY STEP EXECUTION', fg='white', bg='black',font = boldFont,
+stepbystep = Button(ctr_mid, text='STEP BY STEP EXECUTION', fg='white', bg='black',font = boldFont,
                     command=lambda: press('2'), height=1, width=40)
 stepbystep.grid(row=0, column=1)
-t = Table(gui)
-t1 = Table1(gui)
-console = Tk()
 #GUIFrame =Frame(console)
 #GUIFrame.pack(expand=True, anchor=S)
 #console.minsize(width=350, height=325)
