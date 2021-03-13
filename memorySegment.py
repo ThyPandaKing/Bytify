@@ -15,14 +15,16 @@ def FillMemory(data, dataSegment, MemAddres):
             final = final.replace(',', ' ')
             get = final.split()
             for i in range(0, len(get)):
+                # print(get[i])
                 m = int(get[i])
                 hexi = hex(m)
-                hexa = ''
-                # for j in range(0, 10-len(hexi)):
-                #     hexa += '0'
-                hexa = hexa+hexi[2:]
-                hexa = "0x"+hexa
-                dataSegment[indx] = hexa
+                # print(hexi, m)
+                # hexa = ''
+                # # for j in range(0, 10-len(hexi)):
+                # #     hexa += '0'
+                # hexa = hexa+hexi[2:]
+                # hexa = "0x"+hexa
+                dataSegment[indx] = hexi
                 indx += 1
         if(dta.find('.asciiz') != -1):
             first = dta.find('"')

@@ -1,7 +1,7 @@
 def InputFile():
 
     # file input as it is
-    file = open('BubbleSort.s', 'r')
+    file = open('Test.s', 'r')
 
     # all lines in a list
     l = file.readlines()

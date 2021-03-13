@@ -7,7 +7,7 @@ from tkinter import ttk
 Addres = {}
 MemAddres = {}
 PC = 0
-lastinstruction=0
+lastinstruction = 0
 
 dataSegment = 1024*[0]
 
@@ -91,12 +91,12 @@ def InstructionFetch(inst):
     global ctr_left1
     global text
     global lastinstruction
-    k=str(str(PC+1)+'.0')
-    l=str(str(PC+1)+'.50')
-    text.tag_add("start",k, l)
+    k = str(str(PC+1)+'.0')
+    l = str(str(PC+1)+'.50')
+    text.tag_add("start", k, l)
     text.tag_config("start", background="orange")
     lastinstruction = inst
-    #l1 = Label(ctr_left, text=inst, width=50, anchor='w', bg="orange")  # added one Label
+    # l1 = Label(ctr_left, text=inst, width=50, anchor='w', bg="orange")  # added one Label
     #l1.grid(row=PC+3, column=0)
     PC = PC + 1
     if inst == "":
@@ -161,22 +161,32 @@ def InstructionDecode(inst):
             except:
                 return -1, -1
         return execution(instType, arr)
-    elif instType == "and" or instType == "or" or instType == "sll" or instType == "srl" or instType == "andi":
-        if len(arr) != 3:
-            return -2, -2
-        if instType == "and" or instType == "or":
+    elif instType == "and" or instType == "or" or instType == "sll" or instType == "srl" or instType == "andi" or instType == "not":
+        if instType != "not":
+            if len(arr) != 3:
+                return -2, -2
+            if instType == "and" or instType == "or":
+                try:
+                    for reg in arr:
+                        Register[reg]
+                except:
+                    return -1, -1
+            else:
+                try:
+                    for reg in arr:
+                        if reg != arr[-1]:
+                            Register[reg]
+                        else:
+                            int(reg)
+                except:
+                    return -1, -1
+        else:
+            if len(arr) != 2:
+                return -2, -2
+
             try:
                 for reg in arr:
                     Register[reg]
-            except:
-                return -1, -1
-        else:
-            try:
-                for reg in arr:
-                    if reg != arr[-1]:
-                        Register[reg]
-                    else:
-                        int(reg)
             except:
                 return -1, -1
 
@@ -244,7 +254,7 @@ def InstructionDecode(inst):
         except:
             return -1, -1
         return execution(instType, arr)
-    elif instType == 'la' or instType == "move" or instType == "lui":
+    elif instType == 'la' or instType == "move":
         if instType == "move":
             try:
                 Register[arr[0]]
@@ -328,7 +338,8 @@ def execution(instruct, reqRegisters):
             Register[reqRegisters[2]], 16)
         return mem(instruct, reqRegisters, temp)
     elif (instruct == "or"):
-        temp = int(Register[reqRegisters[1]], 16) | int(reqRegisters[2])
+        temp = int(Register[reqRegisters[1]], 16) | int(
+            Register[reqRegisters[2]], 16)
         return mem(instruct, reqRegisters, temp)
     elif (instruct == "not"):
         temp = ~ int(Register[reqRegisters[1]], 16)
@@ -356,9 +367,6 @@ def execution(instruct, reqRegisters):
             temp = int(reqRegisters[1], 16)
         else:
             temp = int(reqRegisters[1])
-        return mem(instruct, reqRegisters, temp)
-    elif (instruct == "lui"):
-        temp = int(reqRegisters[1])
         return mem(instruct, reqRegisters, temp)
     elif (instruct == "la"):
         temp = MemAddres[reqRegisters[1]]
@@ -411,8 +419,8 @@ def mem(instructType, reqRegisters, temp):
 
 def writeBack(instructType, reqRegisters, temp):
     global PC
-    if instructType == "add" or instructType == "sub" or instructType == "subi" or instructType == "mul" or instructType == "div" or instructType == "addi" or instructType == "and" or instructType == "or" or instructType == "not" or instructType == "li" or instructType == "lui" or instructType == "la" or instructType == "move" or instructType == "srl" or instructType == "sll" or instructType == "andi" or instructType == "slt":
-        Register[reqRegisters[0]] = hex(temp)
+    if instructType == "add" or instructType == "sub" or instructType == "subi" or instructType == "mul" or instructType == "div" or instructType == "addi" or instructType == "and" or instructType == "or" or instructType == "not" or instructType == "li" or instructType == "la" or instructType == "move" or instructType == "srl" or instructType == "sll" or instructType == "andi" or instructType == "slt":
+        Register[reqRegisters[0]] = hex(int(temp))
     if instructType == "syscall":
         lastInstruct = Instructions[PC-2]
         lastInstruct = list(lastInstruct.split())
@@ -561,24 +569,27 @@ class Table:
            self.e.configure(background="light blue")
            self.e.insert(END, " ")
            """
-        l1 = Label(ctr_mid, text=" ", width=50, anchor='w', bg="light green")  # added one Label
+        l1 = Label(ctr_mid, text=" ", width=50, anchor='w',
+                   bg="light green")  # added one Label
         l1.grid(row=2, column=0)
         self.e = Entry(root, width=45, fg='black',
                        font=('Arial', 10, 'bold'))
         self.e.grid(row=i+2, column=0)
         printPC = "PC = "+str(PC)
         self.e.insert(END, printPC)
-        #"""
-        l1 = Label(ctr_mid, text=" ", width=50, anchor='w',bg="light green")  # added one Label
+        # """
+        l1 = Label(ctr_mid, text=" ", width=50, anchor='w',
+                   bg="light green")  # added one Label
         l1.grid(row=i+3, column=0)
         self.e = Entry(root, width=50, fg='black',
                        font=('Arial', 10, 'bold'))
         self.e.grid(row=i + 4, column=0)
-        l1 = Label(ctr_mid, text=" ", width=50, anchor='w', bg="light green")  # added one Label
+        l1 = Label(ctr_mid, text=" ", width=50, anchor='w',
+                   bg="light green")  # added one Label
         l1.grid(row=i + 5, column=0)
         printPC = "Executed Instruction = " + str(lastinstruction)
         self.e.insert(END, printPC)
-        #"""
+        # """
         keys = list(Register.keys())
         values = list(Register.values())
         values1 = list(changedRegisters.values())
@@ -617,54 +628,56 @@ class Table:
 
 
 class Table1:
-  def __init__(self, root):
-      """
-      treev = ttk.Treeview(root, selectmode='browse')
-      treev.pack(side='right')
-      verscrlbar = ttk.Scrollbar(root,
-                                 orient="vertical",
-                                 command=treev.yview)
-      verscrlbar.pack(side='right', fill='x')
-      treev.configure(xscrollcommand=verscrlbar.set)
-      treev["columns"] = ("1")
-      treev['show'] = 'headings'
-      treev.column("1", width=90, anchor='w')
-      treev.heading("1", text="Data Segment")
-      i=0
-      while dataSegment[i]!=0:
-        treev.insert("", 'end', text="L1",
-            values=(dataSegment[i]))
-        i+=1
-      """
-      # """
-      i = 0
-      # """
-      # """
-      ctr_right2 = Frame(ctr_right, bg='white', width=0)
-      ctr_right2.grid(row=1, column=0, sticky="ns")
-      l1 = Label(ctr_right1, text="", width=35, anchor='w', bg='gray')  # added one Label
-      l1.grid(row=0, column=0)
-      self.e = Entry(ctr_right1, width=35, fg='black',
-                     font=('Arial', 10, 'bold'))
-      self.e.grid(row=1, column=0)
-      self.e.insert(END, "DATA SEGMENT ")
-      l1 = Label(ctr_right1, text="", width=35, anchor='w', bg='gray')  # added one Label
-      l1.grid(row=2, column=0)
-      h = Scrollbar(ctr_right2, orient='horizontal')
-      h.pack(side=BOTTOM, fill=X)
-      v = Scrollbar(ctr_right2)
-      v.pack(side=RIGHT, fill=Y)
-      text1 = Text(ctr_right2, width=35, height=40, wrap=NONE,
-                  xscrollcommand=h.set,
-                  yscrollcommand=v.set)
-      while(dataSegment[i]!=0):
-          inst = dataSegment[i]+ "\n"
-          text1.insert(END, inst)
+    def __init__(self, root):
+        """
+        treev = ttk.Treeview(root, selectmode='browse')
+        treev.pack(side='right')
+        verscrlbar = ttk.Scrollbar(root,
+                                   orient="vertical",
+                                   command=treev.yview)
+        verscrlbar.pack(side='right', fill='x')
+        treev.configure(xscrollcommand=verscrlbar.set)
+        treev["columns"] = ("1")
+        treev['show'] = 'headings'
+        treev.column("1", width=90, anchor='w')
+        treev.heading("1", text="Data Segment")
+        i=0
+        while dataSegment[i]!=0:
+          treev.insert("", 'end', text="L1",
+              values=(dataSegment[i]))
           i+=1
-      #tag_delete(tagname)
-      text1.pack(side=TOP)
-      h.config(command=text1.xview)
-      v.config(command=text1.yview)
+        """
+        # """
+        i = 0
+        # """
+        # """
+        ctr_right2 = Frame(ctr_right, bg='white', width=0)
+        ctr_right2.grid(row=1, column=0, sticky="ns")
+        l1 = Label(ctr_right1, text="", width=35,
+                   anchor='w', bg='gray')  # added one Label
+        l1.grid(row=0, column=0)
+        self.e = Entry(ctr_right1, width=35, fg='black',
+                       font=('Arial', 10, 'bold'))
+        self.e.grid(row=1, column=0)
+        self.e.insert(END, "DATA SEGMENT ")
+        l1 = Label(ctr_right1, text="", width=35,
+                   anchor='w', bg='gray')  # added one Label
+        l1.grid(row=2, column=0)
+        h = Scrollbar(ctr_right2, orient='horizontal')
+        h.pack(side=BOTTOM, fill=X)
+        v = Scrollbar(ctr_right2)
+        v.pack(side=RIGHT, fill=Y)
+        text1 = Text(ctr_right2, width=35, height=40, wrap=NONE,
+                     xscrollcommand=h.set,
+                     yscrollcommand=v.set)
+        while(dataSegment[i] != 0):
+            inst = dataSegment[i] + "\n"
+            text1.insert(END, inst)
+            i += 1
+        # tag_delete(tagname)
+        text1.pack(side=TOP)
+        h.config(command=text1.xview)
+        v.config(command=text1.yview)
 
 
 """
@@ -764,7 +777,6 @@ def press(num):
             if PC == len(Instructions):
                 return
 
-
             # for (key, value) in Register.items():
             #     print(key, value)
 # print(Register)
@@ -775,9 +787,9 @@ def press(num):
 gui = Tk()
 gui.configure(background="light green")
 gui.title("BYTIFY")
-#gui.geometry("1500x1300")
+# gui.geometry("1500x1300")
 equation = StringVar()
-boldFont = tkFont.Font (size = 10, weight = "bold")
+boldFont = tkFont.Font(size=10, weight="bold")
 console = Tk()
 center = Frame(gui, bg='black', width=50, padx=3, pady=3)
 gui.grid_rowconfigure(1, weight=1)
@@ -789,12 +801,13 @@ center.grid_rowconfigure(0, weight=1)
 center.grid_columnconfigure(1, weight=1)
 
 ctr_left = Frame(center, bg='light blue', width=50)
-ctr_left1= Frame(ctr_left, bg='light blue', width=50)
+ctr_left1 = Frame(ctr_left, bg='light blue', width=50)
 
 ctr_left.grid(row=0, column=0, sticky="ns")
-ctr_left1.grid(row=1,column=0,sticky = "wens")
+ctr_left1.grid(row=1, column=0, sticky="wens")
 
-l1 = Label(ctr_left, text='TEXT',width=30,bg='light pink',fg='black',font = boldFont)  # added one Label
+l1 = Label(ctr_left, text='TEXT', width=30, bg='light pink',
+           fg='black', font=boldFont)  # added one Label
 l1.grid(row=0, column=0)
 
 
@@ -802,11 +815,11 @@ h = Scrollbar(ctr_left1, orient='horizontal')
 h.pack(side=BOTTOM, fill=X)
 v = Scrollbar(ctr_left1)
 v.pack(side=RIGHT, fill=Y)
-text = Text(ctr_left1, width=41,height=45, wrap=NONE,
-         xscrollcommand=h.set,
-         yscrollcommand=v.set)
-for j in range(0,len(Instructions)):
-    inst=Instructions[j]+"\n"
+text = Text(ctr_left1, width=41, height=45, wrap=NONE,
+            xscrollcommand=h.set,
+            yscrollcommand=v.set)
+for j in range(0, len(Instructions)):
+    inst = Instructions[j]+"\n"
     text.insert(END, inst)
 text.pack(side=TOP)
 h.config(command=text.xview)
@@ -816,18 +829,18 @@ ctr_mid = Frame(center, bg='light green', width=10)
 ctr_right = Frame(center, bg='gray', width=50)
 ctr_right1 = Frame(ctr_right, bg='gray', width=50)
 ctr_right2 = Frame(ctr_right, bg='gray', width=50)
-ctr_mid.grid(row=0,column=1, sticky="ns")
-ctr_right.grid(row=0 ,column=2, sticky="ns")
-ctr_right1.grid(row=0 ,column=0, sticky="ns")
-ctr_right2.grid(row=1 ,column=0, sticky="ns")
+ctr_mid.grid(row=0, column=1, sticky="ns")
+ctr_right.grid(row=0, column=2, sticky="ns")
+ctr_right1.grid(row=0, column=0, sticky="ns")
+ctr_right2.grid(row=1, column=0, sticky="ns")
 t = Table(ctr_mid)
 t1 = Table1(ctr_right2)
 
 
-onestep = Button(ctr_mid, text='ONE STEP EXECUTION', fg='white', bg='black',font = boldFont,
+onestep = Button(ctr_mid, text='ONE STEP EXECUTION', fg='white', bg='black', font=boldFont,
                  command=lambda: press('1'), height=1, width=40)
 onestep.grid(row=0, column=0)
-stepbystep = Button(ctr_mid, text='STEP BY STEP EXECUTION', fg='white', bg='black',font = boldFont,
+stepbystep = Button(ctr_mid, text='STEP BY STEP EXECUTION', fg='white', bg='black', font=boldFont,
                     command=lambda: press('2'), height=1, width=40)
 stepbystep.grid(row=0, column=1)
 #GUIFrame =Frame(console)
@@ -835,6 +848,6 @@ stepbystep.grid(row=0, column=1)
 #console.minsize(width=350, height=325)
 #self.Button2 = Button(parent, text='exit', command= parent.quit)
 #self.Button2.place(x=25, y=300)
-#console.geometry("900x600")
+# console.geometry("900x600")
 console.title("Console")
 gui.mainloop()

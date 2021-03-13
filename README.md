@@ -4,11 +4,29 @@ The project mainly focus on building a **Assembly language simulator** with **MI
 
 ## Function support in phase 1
 
-1. Add/SUB/MUL/DIV
-1. BEQ/BNE
+1. Add
+1. SUB
+1. MUL
+1. DIV
+1. ADDI
+1. SUBI
+1. AND
+1. OR
+1. NOT
+1. SLL
+1. SRL
+1. ANDI
+1. LI
+1. LA
+1. MOVE
+1. SLT
+1. BNE
+1. BEQ
 1. Jump
-1. Ld (load) / St (Store)
-1. AND/OR
+1. Jump Break (Exit)
+1. LW
+1. SW
+1. SYSCALL
 
 ### Programming Language used
 

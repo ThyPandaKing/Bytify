@@ -1,14 +1,14 @@
 .data
 
-.word 10,2,3,6,11,5,4,3,2,1
+.word 10,2,3,6,-11,5,4,3,2,1
 
 .text
 lui  $s0 , 0
 li   $t0 , 10  # size of array
-li   $s1 , 0  # first index
+li   $s1 , 0   # first index
 
 MainLoop:
-    lui     $s0, 0
+    li     $s0, 0
     li      $s1, 0
     addi	$t0, $t0, -1	   # $t0 = $t1 + 0
     beq     $t0, $zero, Finish
