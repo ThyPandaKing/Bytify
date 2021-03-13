@@ -2,32 +2,29 @@
 
 The project mainly focus on building a **Assembly language simulator** with **MIPS** architecture.
 
-## Function support in phase 1
+## Functions support in phase 1
 
-1. Add
-1. SUB
-1. MUL
-1. DIV
-1. ADDI
-1. SUBI
-1. AND
-1. OR
-1. NOT
-1. SLL
-1. SRL
-1. ANDI
-1. LI
-1. LA
-1. MOVE
-1. SLT
-1. BNE
-1. BEQ
-1. Jump
-1. Jump Break (Exit)
-1. LW
-1. SW
-1. SYSCALL
+1. Arithmetic
+1. Bitwise
+1. Initializing
+1. Branch
+1. Memory
+1. Printing
 
 ### Programming Language used
 
 `Python`
+
+### How to start?
+
+- Check Rules.md for basic rules to follow
+- Check Manual.md for instruction set and how to use them.
+
+### Further Improvements that can be done
+
+- Adding functionality of hexa numbers
+- Making GUI more interactive
+- Adding run time error detection methods.
+- Making all the 5 functions of pipelining parallel to implement pipelining.
+
+### Bubble Sort code is given to test

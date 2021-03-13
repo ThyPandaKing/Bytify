@@ -1,22 +1,22 @@
 .data
 
-.word 10,2,3,6,-11,5,4,3,2,1
+.word 100,1,-20,1000,5,9,1001,-10,-1,-500
 
 .text
-lui  $s0 , 0
+li  $s0 , 0
 li   $t0 , 10  # size of array
 li   $s1 , 0   # first index
 
 MainLoop:
     li     $s0, 0
-    li      $s1, 0
-    addi	$t0, $t0, -1	   # $t0 = $t1 + 0
+    li      $s1, 0             # j
+    addi	$t0, $t0, -1	   # i
     beq     $t0, $zero, Finish
 LoopFirst:
-    lw		$t1, 0($s0)		   # filled 0+s1 in t1
-    beq		$t0, $s1, MainLoop # if $t0 == $t1 then target
-    lw		$t2, 4($s0)		   # 
-    addi	$s1, $s1, 1 	   # $t1 = 
+    lw		$t1, 0($s0)		   # filled 0+s1 in  , a[i]
+    beq		$t0, $s1, MainLoop # if $t0 == $s1, i==j then target
+    lw		$t2, 4($s0)		   # a[i+1] 
+    addi	$s1, $s1, 1 	   #  j++
     slt     $t3, $t2, $t1      # if(a[i]>a[i+1])t3=1
     bne		$t3, $zero, SWAP   # if $t0 == $t1 then target
 Back:

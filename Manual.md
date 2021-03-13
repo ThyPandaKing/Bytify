@@ -38,7 +38,7 @@ divides value of $register2 and $register3 and save in $register1.
 addi $register1 , $register2 , <constant>
 ```
 
-adds value of $register2 and <constant> and save in $register1.
+adds value of $register2 and constant and save in $register1.
 
 ## SUBI
 
@@ -46,7 +46,7 @@ adds value of $register2 and <constant> and save in $register1.
 subi $register1 , $register2 , <constant>
 ```
 
-adds value of $register2 and <constant> and save in $register1.
+adds value of $register2 and constant and save in $register1.
 
 # Bitwise
 
@@ -80,7 +80,7 @@ negates value of $register2 and save in $register1.
 sll $register1 , $register2 , <constant>
 ```
 
-shift left the $register2 value by <constant> units and save in $register1
+shift left the $register2 value by constant units and save in $register1
 
 ## SRL
 
@@ -88,7 +88,7 @@ shift left the $register2 value by <constant> units and save in $register1
 srl $register1 , $register2 , <constant>
 ```
 
-shift right the $register2 value by <constant> units and save in $register1
+shift right the $register2 value by constant units and save in $register1
 
 ## ANDI
 
@@ -96,7 +96,7 @@ shift right the $register2 value by <constant> units and save in $register1
 andi $register1 , $register2 , <constant>
 ```
 
-AND values of $register2 and <constant> and save in $register1.
+AND values of $register2 and constant and save in $register1.
 
 # Initializing
 
@@ -111,7 +111,7 @@ set the value of $register as that constant.
 ## LA
 
 ```
-la $register , <Address>
+la $register , <MemoryAddress>
 ```
 
 set the address of that memory segment location in $register.
@@ -124,7 +124,7 @@ used to print memory segment values , with the help of $v0 , $ a0 , and syscall 
 move $register1 , $register2
 ```
 
-copies the value of $register1 to $register2.
+copies the value of $register2 to $register1.
 
 # Branch
 
@@ -142,7 +142,7 @@ if $register3 > $register2 then $register1 will be set to one , otherwise 0.
 bne $register1  , $register2 , <AddressLocation>
 ```
 
-if $register1 != $register2 jump to <AddressLocation>
+if $register1 != $register2 jump to AddressLocation
 
 ## BEQ
 
@@ -150,7 +150,7 @@ if $register1 != $register2 jump to <AddressLocation>
 beq $register1  , $register2 , <AddressLocation>
 ```
 
-if $register1 == $register2 jump to <AddressLocation>
+if $register1 == $register2 jump to AddressLocation
 
 ## Jump
 
@@ -158,7 +158,7 @@ if $register1 == $register2 jump to <AddressLocation>
 j <AddressLocation>
 ```
 
-Unconditional jump to <AddressLocation>
+Unconditional jump to AddressLocation
 
 ## Jump Break (Exit)
 
@@ -176,7 +176,7 @@ used to end the code , exit condition
 lw $register1 , <constant>($register2)
 ```
 
-set the value of $register1 with the value at (<constant>+$register2) in memory.
+set the value of $register1 with the value at (constant+$register2) in memory.
 
 ## SW
 
@@ -184,7 +184,7 @@ set the value of $register1 with the value at (<constant>+$register2) in memory.
 sw $register1 , <constant>($register2)
 ```
 
-copy the value of $register1 at the address of (<constant>+$register2) in memory.
+copy the value of $register1 at the address of (constant+$register2) in memory.
 
 # Printing
 
