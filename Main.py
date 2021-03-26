@@ -9,6 +9,22 @@ MemAddres = {}
 PC = 0
 lastinstruction = 0
 
+
+class stall:
+    def __init__(self, ck, pc):
+        self.clock = ck
+        self.at_instruction = pc
+
+
+# variables used for pipelining
+instructions_till_now = 0
+is_data_forwarding_allowed = True
+my_clock = 0
+previous_registers = 2*[4*[0]]
+stalls_list = []
+data_forwarding_list = []
+
+
 dataSegment = 1024*[0]
 
 Register = {
@@ -85,12 +101,59 @@ improveInstructions(Instructions)  # for branch instructions
 indx = FillMemory.FillMemory(Data, dataSegment, MemAddres)
 
 
+def checkForStalls(instType, arr):
+    global previous_registers
+    global my_clock
+    global PC
+    # in arithemetic or bitwise instructions
+    print(arr[1:])
+    print(previous_registers[0][1])
+    print(previous_registers[1][1])
+
+    if instType == "add" or instType == "sub" or instType == "mul" or instType == "div" \
+        or instType == 'addi' or instType == "and" or instType == "or" or instType == "sll" \
+            or instType == "srl" or instType == "andi" or instType == "not":
+        if (instructions_till_now > 2 and (previous_registers[0][1] in arr[1:] or previous_registers[1][1] in arr[1:])) or (instructions_till_now == 2 and previous_registers[0][1] in arr[1:]):
+
+            if is_data_forwarding_allowed == False:
+
+                my_clock += 4
+                stalls_list.append(
+                    f'{4} , Due to Data Dependency for PC = {PC}')
+                return [-1, -1]
+            else:
+                # no stalls, data will be forwarded
+
+                if previous_registers[0][1] in arr[1:]:
+                    if instructions_till_now > 2 and previous_registers[1][1] in arr[1:]:
+                        data_forwarding_list.append(
+                            f'EXE-MEM → ID-EXE AND EXE-WB → ID-EXE for PC = {PC}')
+                        return [previous_registers[0][1], previous_registers[1][1]]
+
+                    data_forwarding_list.append(
+                        f'EXE-MEM → ID-EXE for PC = {PC}')
+                    return [previous_registers[0][1], -1]
+                else:
+                    data_forwarding_list.append(
+                        f'MEM-WB → ID-EXE for PC = {PC}')
+                    return [-1, previous_registers[1][1]]
+
+        else:
+            return [-1, -1]
+
+    return [-1, -1]
+
+
 def InstructionFetch(inst):
  #   inst = Instructions[PC]
     global PC
     global ctr_left1
     global text
     global lastinstruction
+    global my_clock
+    global previous_registers
+    global instructions_till_now
+
     k = str(str(PC+1)+'.0')
     l = str(str(PC+1)+'.50')
     text.tag_add("start", k, l)
@@ -99,6 +162,14 @@ def InstructionFetch(inst):
     PC = PC + 1
     if inst == "":
         return
+
+    # previous_registers[0] contains the last instruction and [1] contains last to last inst
+
+    my_clock += 1
+    instructions_till_now += 1
+    previous_registers[1][0] = previous_registers[0][0]
+    previous_registers[0][0] = inst
+
     return InstructionDecode(inst)
 
 
@@ -109,16 +180,8 @@ def InstructionDecode(inst):
     idx = 0
     instType = ""
     t = inst.split()
-    if "jal" in inst:
-        instType = "jal"
-        inst = inst[4:]
-        inst = inst.strip()
-        try:
-            Addres[inst]
-        except:
-            return -1, -1
-        return execution(instType, [inst])
-    elif t[0] == 'j':
+
+    if t[0] == 'j':
         instType = 'j'
         inst = inst[1:]
         inst = inst.strip()
@@ -138,7 +201,7 @@ def InstructionDecode(inst):
     arr = inst.split()
     # arguments will depend upon instType
     # 1. add,sub,mul,div
-    if instType == "add" or instType == "sub" or instType == "mul" or instType == "div" or instType == 'addi' or instType == 'subi':
+    if instType == "add" or instType == "sub" or instType == "mul" or instType == "div" or instType == 'addi':
         if len(arr) != 3:
             return -2, -2
         if instType != "addi":
@@ -156,7 +219,6 @@ def InstructionDecode(inst):
                         int(reg)
             except:
                 return -1, -1
-        return execution(instType, arr)
     elif instType == "and" or instType == "or" or instType == "sll" or instType == "srl" or instType == "andi" or instType == "not":
         if instType != "not":
             if len(arr) != 3:
@@ -185,8 +247,6 @@ def InstructionDecode(inst):
                     Register[reg]
             except:
                 return -1, -1
-
-        return execution(instType, arr)
     elif instType == "beq" or instType == "bne":
         if len(arr) != 3:
             return -2, -2
@@ -198,8 +258,6 @@ def InstructionDecode(inst):
                     Addres[reg]
         except:
             return -1, -1
-
-        return execution(instType, arr)
     elif instType == "lw" or instType == "sw":
         if inst.find('(') == -1:
             return -1, -1
@@ -230,9 +288,8 @@ def InstructionDecode(inst):
             Register[temp2]
         except:
             return -1, -1
-        return execution(instType, arr)
     elif instType == "jr":
-        return execution(instType, ["$ra"])
+        arr = ["$ra"]
     elif instType == 'j':
         if len(arr) != 1:
             return -2, -2
@@ -240,7 +297,6 @@ def InstructionDecode(inst):
             Addres[arr[0]]
         except:
             return -1, -1
-        return execution(instType, arr)
     elif instType == 'li':
         if len(arr) != 2:
             return -2, -2
@@ -249,7 +305,6 @@ def InstructionDecode(inst):
             Register[arr[0]]
         except:
             return -1, -1
-        return execution(instType, arr)
     elif instType == 'la' or instType == "move":
         if instType == "move":
             try:
@@ -272,7 +327,6 @@ def InstructionDecode(inst):
                 int(arr[1])
             except:
                 return -1, -1
-        return execution(instType, arr)
     elif instType == "slt":
         try:
             Register[arr[0]]
@@ -280,20 +334,50 @@ def InstructionDecode(inst):
             Register[arr[2]]
         except:
             return -1, -1
-        return execution(instType, arr)
     else:
         print("ERROR: cmd not found")
         return -1, -1
 
+    # checking for dependencies and making decision according to the situation.
+    dtaFor = checkForStalls(instType, arr)
+    temp = previous_registers[1].copy()
+    temp[1] = previous_registers[0][1]
 
-def execution(instruct, reqRegisters):
+    previous_registers[1] = temp
+    previous_registers[0][1] = arr[0]
+
+    return execution(instType, arr, dtaFor)
+
+
+def execution(instruct, reqRegisters, dtaFor):
     global PC
+    global previous_registers
+    temp = 0
     if instruct != "sw" and instruct != "syscall":
         change(reqRegisters[0])
     if (instruct == "add"):
         if len(reqRegisters) == 3:
-            temp = int(Register[reqRegisters[1]], 16) + \
-                int(Register[reqRegisters[2]], 16)
+            if dtaFor[0] == -1 and dtaFor[1] == -1:
+                temp = int(Register[reqRegisters[1]], 16) + \
+                    int(Register[reqRegisters[2]], 16)
+            elif dtaFor[0] != -1 and dtaFor[1] != -1:
+                temp = previous_registers[0][2]+previous_registers[1][2]
+            else:
+                if dtaFor[0] != -1:
+                    if dtaFor[0] == reqRegisters[1]:
+                        temp = int(Register[reqRegisters[2]],
+                                   16) + previous_registers[0][2]
+                    else:
+                        temp = int(Register[reqRegisters[1]],
+                                   16) + previous_registers[0][2]
+                else:
+                    if dtaFor[1] == reqRegisters[1]:
+                        temp = int(Register[reqRegisters[2]],
+                                   16) + previous_registers[1][2]
+                    else:
+                        temp = int(Register[reqRegisters[1]],
+                                   16) + previous_registers[1][2]
+
         else:
             if (reqRegisters[1].find('x') != -1):
                 temp = int(reqRegisters[1], 16) + \
@@ -301,45 +385,149 @@ def execution(instruct, reqRegisters):
             else:
                 temp = int(reqRegisters[1]) + \
                     int(Register[reqRegisters[2]], 16)
-
-        return mem(instruct, reqRegisters, temp)
     elif (instruct == "sub"):
-        temp = int(Register[reqRegisters[1]], 16) - \
-            int(Register[reqRegisters[2]], 16)
-        return mem(instruct, reqRegisters, temp)
+        if dtaFor[0] == -1 and dtaFor[1] == -1:
+            temp = int(Register[reqRegisters[1]], 16) - \
+                int(Register[reqRegisters[2]], 16)
+        elif dtaFor[0] != -1 and dtaFor[1] != -1:
+            if dtaFor[0] == reqRegisters[1]:
+                temp = previous_registers[0][2]-previous_registers[1][2]
+            else:
+                temp = previous_registers[1][2]-previous_registers[0][2]
+        else:
+            if dtaFor[0] != -1:
+                if dtaFor[0] == reqRegisters[1]:
+                    temp = previous_registers[0][2] - int(Register[reqRegisters[2]],
+                                                          16)
+                else:
+                    temp = int(Register[reqRegisters[1]],
+                               16) - previous_registers[0][2]
+            else:
+                if dtaFor[1] == reqRegisters[1]:
+                    temp = previous_registers[1][2] - int(Register[reqRegisters[2]],
+                                                          16)
+                else:
+                    temp = int(Register[reqRegisters[1]],
+                               16) - previous_registers[1][2]
+
     elif (instruct == "mul"):
-        temp = int(Register[reqRegisters[1]], 16) * \
-            int(Register[reqRegisters[2]], 16)
-        return mem(instruct, reqRegisters, temp)
+        if dtaFor[0] == -1 and dtaFor[1] == -1:
+            temp = int(Register[reqRegisters[1]], 16) * \
+                int(Register[reqRegisters[2]], 16)
+        elif dtaFor[0] != -1 and dtaFor[1] != -1:
+            if dtaFor[0] == reqRegisters[1]:
+                temp = previous_registers[0][2]*previous_registers[1][2]
+            else:
+                temp = previous_registers[1][2]*previous_registers[0][2]
+        else:
+            if dtaFor[0] != -1:
+                if dtaFor[0] == reqRegisters[1]:
+                    temp = previous_registers[0][2] * int(Register[reqRegisters[2]],
+                                                          16)
+                else:
+                    temp = int(Register[reqRegisters[1]],
+                               16) * previous_registers[0][2]
+            else:
+                if dtaFor[1] == reqRegisters[1]:
+                    temp = previous_registers[1][2] * int(Register[reqRegisters[2]],
+                                                          16)
+                else:
+                    temp = int(Register[reqRegisters[1]],
+                               16) * previous_registers[1][2]
     elif (instruct == "div"):
-        temp = int(Register[reqRegisters[1]], 16) / \
-            int(Register[reqRegisters[2]], 16)
-        return mem(instruct, reqRegisters, temp)
+        if int(Register[reqRegisters[2]], 16) == 0:
+            return "BREAK"
+        if dtaFor[0] == -1 and dtaFor[1] == -1:
+            temp = int(Register[reqRegisters[1]], 16) // \
+                int(Register[reqRegisters[2]], 16)
+        elif dtaFor[0] != -1 and dtaFor[1] != -1:
+            if dtaFor[0] == reqRegisters[1]:
+                temp = previous_registers[0][2] // previous_registers[1][2]
+            else:
+                temp = previous_registers[1][2] // previous_registers[0][2]
+        else:
+            if dtaFor[0] != -1:
+                if dtaFor[0] == reqRegisters[1]:
+                    temp = previous_registers[0][2] // int(Register[reqRegisters[2]],
+                                                           16)
+                else:
+                    temp = int(Register[reqRegisters[1]],
+                               16) // previous_registers[0][2]
+            else:
+                if dtaFor[1] == reqRegisters[1]:
+                    temp = previous_registers[1][2] // int(Register[reqRegisters[2]],
+                                                           16)
+                else:
+                    temp = int(Register[reqRegisters[1]],
+                               16) // previous_registers[1][2]
     elif (instruct == "addi"):
-        if (reqRegisters[2].find('x') != -1):
-            temp = int(reqRegisters[2], 16) + \
-                int(Register[reqRegisters[1]], 16)
+        if reqRegisters[1] in dtaFor:
+            if reqRegisters[1] == dtaFor[0]:
+                temp = int(reqRegisters[2]) + \
+                    previous_registers[0][2]
+            else:
+                temp = int(reqRegisters[2]) + previous_registers[1][2]
         else:
             temp = int(reqRegisters[2]) + int(Register[reqRegisters[1]], 16)
-        return mem(instruct, reqRegisters, temp)
-    elif (instruct == "subi"):
-        if (reqRegisters[2].find('x') != -1):
-            temp = int(Register[reqRegisters[1]], 16) - \
-                int(reqRegisters[2], 16)
-        else:
-            temp = int(Register[reqRegisters[1]], 16) - int(reqRegisters[2])
-        return mem(instruct, reqRegisters, temp)
+
     elif (instruct == "and"):
-        temp = int(Register[reqRegisters[1]], 16) & int(
-            Register[reqRegisters[2]], 16)
-        return mem(instruct, reqRegisters, temp)
+        if dtaFor[0] == -1 and dtaFor[1] == -1:
+            temp = int(Register[reqRegisters[1]], 16) & \
+                int(Register[reqRegisters[2]], 16)
+        elif dtaFor[0] != -1 and dtaFor[1] != -1:
+            if dtaFor[0] == reqRegisters[1]:
+                temp = previous_registers[0][2] & previous_registers[1][2]
+            else:
+                temp = previous_registers[1][2] & previous_registers[0][2]
+        else:
+            if dtaFor[0] != -1:
+                if dtaFor[0] == reqRegisters[1]:
+                    temp = previous_registers[0][2] & int(Register[reqRegisters[2]],
+                                                          16)
+                else:
+                    temp = int(Register[reqRegisters[1]],
+                               16) & previous_registers[0][2]
+            else:
+                if dtaFor[1] == reqRegisters[1]:
+                    temp = previous_registers[1][2] & int(Register[reqRegisters[2]],
+                                                          16)
+                else:
+                    temp = int(Register[reqRegisters[1]],
+                               16) & previous_registers[1][2]
     elif (instruct == "or"):
-        temp = int(Register[reqRegisters[1]], 16) | int(
-            Register[reqRegisters[2]], 16)
-        return mem(instruct, reqRegisters, temp)
+        if dtaFor[0] == -1 and dtaFor[1] == -1:
+            temp = int(Register[reqRegisters[1]], 16) | \
+                int(Register[reqRegisters[2]], 16)
+        elif dtaFor[0] != -1 and dtaFor[1] != -1:
+            if dtaFor[0] == reqRegisters[1]:
+                temp = previous_registers[0][2] | previous_registers[1][2]
+            else:
+                temp = previous_registers[1][2] | previous_registers[0][2]
+        else:
+            if dtaFor[0] != -1:
+                if dtaFor[0] == reqRegisters[1]:
+                    temp = previous_registers[0][2] | int(Register[reqRegisters[2]],
+                                                          16)
+                else:
+                    temp = int(Register[reqRegisters[1]],
+                               16) | previous_registers[0][2]
+            else:
+                if dtaFor[1] == reqRegisters[1]:
+                    temp = previous_registers[1][2] | int(Register[reqRegisters[2]],
+                                                          16)
+                else:
+                    temp = int(Register[reqRegisters[1]],
+                               16) | previous_registers[1][2]
+
     elif (instruct == "not"):
-        temp = ~ int(Register[reqRegisters[1]], 16)
-        return mem(instruct, reqRegisters, temp)
+        if reqRegisters[1] in dtaFor:
+            if reqRegisters[1] == dtaFor[0]:
+                temp = ~ previous_registers[0][2]
+            else:
+                temp = ~ previous_registers[1][2]
+        else:
+            temp = ~ int(Register[reqRegisters[1]], 16)
+
     elif (instruct == "bne"):
         if Register[reqRegisters[0]] != Register[reqRegisters[1]]:
             PC = Addres[reqRegisters[2]]
@@ -359,11 +547,7 @@ def execution(instruct, reqRegisters):
     elif (instruct == "jr"):
         return "BREAK"
     elif (instruct == "li"):
-        if (reqRegisters[1].find('x') != -1):
-            temp = int(reqRegisters[1], 16)
-        else:
-            temp = int(reqRegisters[1])
-        return mem(instruct, reqRegisters, temp)
+        temp = int(reqRegisters[1])
     elif (instruct == "la"):
         temp = MemAddres[reqRegisters[1]]
         return mem(instruct, reqRegisters, temp)
@@ -371,18 +555,32 @@ def execution(instruct, reqRegisters):
         temp = int(Register[reqRegisters[1]], 16)
         return mem(instruct, reqRegisters, temp)
     elif (instruct == "srl"):
-        temp = int(Register[reqRegisters[1]], 16) >> int(reqRegisters[2])
-        return mem(instruct, reqRegisters, temp)
+        if reqRegisters[1] in dtaFor:
+            if reqRegisters[1] == dtaFor[0]:
+                temp = previous_registers[0][2] >> int(reqRegisters[2])
+            else:
+                temp = previous_registers[1][2] >> int(reqRegisters[2])
+        else:
+            temp = int(Register[reqRegisters[1]], 16) >> int(reqRegisters[2])
+
     elif (instruct == "sll"):
-        temp = int(Register[reqRegisters[1]], 16) << int(reqRegisters[2])
-        return mem(instruct, reqRegisters, temp)
+        if reqRegisters[1] in dtaFor:
+            if reqRegisters[1] == dtaFor[0]:
+                temp = previous_registers[0][2] << int(reqRegisters[2])
+            else:
+                temp = previous_registers[1][2] << int(reqRegisters[2])
+        else:
+            temp = int(Register[reqRegisters[1]], 16) << int(reqRegisters[2])
+
     elif (instruct == "andi"):
-        if (reqRegisters[2].find('x') != -1):
-            temp = int(Register[reqRegisters[1]],
-                       16) & int(reqRegisters[2], 16)
+        if reqRegisters[1] in dtaFor:
+            if reqRegisters[1] == dtaFor[0]:
+                temp = previous_registers[0][2] & int(reqRegisters[2])
+            else:
+                temp = previous_registers[1][2] & int(reqRegisters[2])
         else:
             temp = int(Register[reqRegisters[1]], 16) & int(reqRegisters[2])
-        return mem(instruct, reqRegisters, temp)
+
     elif instruct == "slt":
 
         temp = int(Register[reqRegisters[2]], 16) > int(
@@ -390,6 +588,20 @@ def execution(instruct, reqRegisters):
         return mem(instruct, reqRegisters, temp)
     elif (instruct == "syscall"):
         return mem(instruct, reqRegisters, 0)
+
+    tp = previous_registers[1].copy()
+    tp[2] = previous_registers[0][2]
+
+    previous_registers[1] = tp
+    previous_registers[0][2] = temp
+
+    print(previous_registers)
+    print(stalls_list)
+    print(data_forwarding_list)
+    # print(temp)
+    print(instructions_till_now)
+
+    return mem(instruct, reqRegisters, temp)
 
 
 def mem(instructType, reqRegisters, temp):
@@ -610,6 +822,8 @@ def press(num):
                 label = Label(root, text=toPrint).pack()
                 break
             elif ans == "BREAK":
+                # adding 4 extra for the end
+                my_clock += 4
                 break
         t = Table(ctr_mid)
         t1 = Table1(ctr_right2)
