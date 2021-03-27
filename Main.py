@@ -106,20 +106,17 @@ def checkForStalls(instType, arr):
     global my_clock
     global PC
     # in arithemetic or bitwise instructions
-    print(arr[1:])
-    print(previous_registers[0][1])
-    print(previous_registers[1][1])
 
     if instType == "add" or instType == "sub" or instType == "mul" or instType == "div" \
         or instType == 'addi' or instType == "and" or instType == "or" or instType == "sll" \
-            or instType == "srl" or instType == "andi" or instType == "not":
+            or instType == "srl" or instType == "andi" or instType == "not" or instType == "move":
         if (instructions_till_now > 2 and (previous_registers[0][1] in arr[1:] or previous_registers[1][1] in arr[1:])) or (instructions_till_now == 2 and previous_registers[0][1] in arr[1:]):
 
             if is_data_forwarding_allowed == False:
 
                 my_clock += 4
                 stalls_list.append(
-                    f'{4} , Due to Data Dependency for PC = {PC}')
+                    f'{4} , Due to Data Dependency for PC = {PC-1} , clock = {my_clock-4}')
                 return [-1, -1]
             else:
                 # no stalls, data will be forwarded
@@ -127,15 +124,28 @@ def checkForStalls(instType, arr):
                 if previous_registers[0][1] in arr[1:]:
                     if instructions_till_now > 2 and previous_registers[1][1] in arr[1:]:
                         data_forwarding_list.append(
-                            f'EXE-MEM → ID-EXE AND EXE-WB → ID-EXE for PC = {PC}')
+                            f'EXE-MEM → ID-EXE AND MEM-WB → ID-EXE for PC = {PC-1} , clock = {my_clock}')
+                        if 'lw' in previous_registers[1][0] or 'sw' in previous_registers[1][0]:
+                            # print("my_clock")
+                            my_clock += 1
+                            stalls_list.append(
+                                f'{1} , Due to Data Dependency on LW/SW for PC = {PC-1}, clock = {my_clock-1}')
+                            data_forwarding_list[-1] = f'MEM-WB → ID-EXE for PC = {PC-1}, clock = {my_clock}'
+                            return [previous_registers[0][1], -1]
                         return [previous_registers[0][1], previous_registers[1][1]]
-
+                    if 'lw' in previous_registers[1][0] or 'sw' in previous_registers[1][0]:
+                        my_clock += 1
+                        stalls_list.append(
+                            f'{1} , Due to Data Dependency on LW/SW for PC = {PC-1}, clock = {my_clock-1}')
+                        data_forwarding_list.append(
+                            f'MEM-WB → ID-EXE for PC = {PC-1}, clock = {my_clock}')
+                        return [previous_registers[0][1], -1, -1]
                     data_forwarding_list.append(
-                        f'EXE-MEM → ID-EXE for PC = {PC}')
+                        f'EXE-MEM → ID-EXE for PC = {PC-1}, clock = {my_clock}')
                     return [previous_registers[0][1], -1]
                 else:
                     data_forwarding_list.append(
-                        f'MEM-WB → ID-EXE for PC = {PC}')
+                        f'MEM-WB → ID-EXE for PC = {PC-1}, clock = {my_clock}')
                     return [-1, previous_registers[1][1]]
 
         else:
@@ -352,9 +362,25 @@ def InstructionDecode(inst):
 def execution(instruct, reqRegisters, dtaFor):
     global PC
     global previous_registers
+    global my_clock
+    global data_forwarding_list
+
     temp = 0
     if instruct != "sw" and instruct != "syscall":
         change(reqRegisters[0])
+
+    # need data from mem-wb stage
+    if dtaFor[0] != -1 or dtaFor[1] != -1:
+        if 'MEM-WB' in data_forwarding_list[-1]:
+            if dtaFor[0] != -1:
+                adi = previous_registers[0].copy()
+                adi[2] = adi[3]
+                previous_registers[0] = adi
+            if dtaFor[1] != -1:
+                sow = previous_registers[1].copy()
+                sow[2] = sow[3]
+                previous_registers[1] = sow
+
     if (instruct == "add"):
         if len(reqRegisters) == 3:
             if dtaFor[0] == -1 and dtaFor[1] == -1:
@@ -379,12 +405,9 @@ def execution(instruct, reqRegisters, dtaFor):
                                    16) + previous_registers[1][2]
 
         else:
-            if (reqRegisters[1].find('x') != -1):
-                temp = int(reqRegisters[1], 16) + \
-                    int(Register[reqRegisters[2]], 16)
-            else:
-                temp = int(reqRegisters[1]) + \
-                    int(Register[reqRegisters[2]], 16)
+            temp = int(reqRegisters[1]) + \
+                int(Register[reqRegisters[2]], 16)
+
     elif (instruct == "sub"):
         if dtaFor[0] == -1 and dtaFor[1] == -1:
             temp = int(Register[reqRegisters[1]], 16) - \
@@ -550,10 +573,8 @@ def execution(instruct, reqRegisters, dtaFor):
         temp = int(reqRegisters[1])
     elif (instruct == "la"):
         temp = MemAddres[reqRegisters[1]]
-        return mem(instruct, reqRegisters, temp)
     elif (instruct == "move"):
         temp = int(Register[reqRegisters[1]], 16)
-        return mem(instruct, reqRegisters, temp)
     elif (instruct == "srl"):
         if reqRegisters[1] in dtaFor:
             if reqRegisters[1] == dtaFor[0]:
@@ -595,11 +616,7 @@ def execution(instruct, reqRegisters, dtaFor):
     previous_registers[1] = tp
     previous_registers[0][2] = temp
 
-    print(previous_registers)
-    print(stalls_list)
-    print(data_forwarding_list)
-    # print(temp)
-    print(instructions_till_now)
+    # print(instructions_till_now)
 
     return mem(instruct, reqRegisters, temp)
 
@@ -616,10 +633,30 @@ def mem(instructType, reqRegisters, temp):
                         int(dataSegment[temp//4], 16))
                 else:
                     Register[reqRegisters[0]] = hex(int(dataSegment[temp//4]))
-
         else:
             dataSegment[temp//4] = Register[reqRegisters[0]]
+
+        tp = previous_registers[1].copy()
+        tp[3] = previous_registers[0][3]
+
+        previous_registers[1] = tp
+        previous_registers[0][3] = int(Register[reqRegisters[0]], 16)
+
+        print(previous_registers)
+        print(stalls_list)
+        print(data_forwarding_list)
+        print(my_clock)
     else:
+        tp = previous_registers[1].copy()
+        tp[3] = previous_registers[0][3]
+
+        previous_registers[1] = tp
+        previous_registers[0][3] = temp
+
+        print(previous_registers)
+        print(stalls_list)
+        print(data_forwarding_list)
+        print(my_clock)
         return writeBack(instructType, reqRegisters, temp)
 
 
