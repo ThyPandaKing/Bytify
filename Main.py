@@ -23,7 +23,7 @@ my_clock = 0
 previous_registers = 2*[4*[0]]
 stalls_list = []
 data_forwarding_list = []
-
+last_pc_value = 0
 
 dataSegment = 1024*[0]
 
@@ -105,11 +105,26 @@ def checkForStalls(instType, arr):
     global previous_registers
     global my_clock
     global PC
+    global last_pc_value
     # in arithemetic or bitwise instructions
+    if checkBranch(instType):
+        last_pc_value = PC
 
-    if instType == "add" or instType == "sub" or instType == "mul" or instType == "div" \
-        or instType == 'addi' or instType == "and" or instType == "or" or instType == "sll" \
-            or instType == "srl" or instType == "andi" or instType == "not" or instType == "move":
+    if checkBranch(previous_registers[1][0]):
+        if last_pc_value != PC-1:
+            if is_data_forwarding_allowed == False:
+
+                my_clock += 4
+                stalls_list.append(
+                    f'{4} , Due to Branch Statement for PC = {PC-1} , clock = {my_clock-4}')
+                return [-1, -1]
+            my_clock += 1
+            stalls_list.append(
+                f'{1} , Due to Wrong Branch Prediction for PC = {PC-1} , clock = {my_clock-1}')
+            data_forwarding_list.append(
+                f'ID-EXE → IF-ID for PC = {PC-1}, clock = {my_clock}')
+
+    if checkArithmetic(instType):
         if (instructions_till_now > 2 and (previous_registers[0][1] in arr[1:] or previous_registers[1][1] in arr[1:])) or (instructions_till_now == 2 and previous_registers[0][1] in arr[1:]):
 
             if is_data_forwarding_allowed == False:
@@ -152,6 +167,22 @@ def checkForStalls(instType, arr):
             return [-1, -1]
 
     return [-1, -1]
+
+
+def checkBranch(toCheck):
+    if 'beq' in toCheck or 'bne' in toCheck or 'j' in toCheck:
+        return True
+    else:
+        return False
+
+
+def checkArithmetic(toCheck):
+    if toCheck == "add" or toCheck == "sub" or toCheck == "mul" or toCheck == "div" \
+            or toCheck == 'addi' or toCheck == "and" or toCheck == "or" or toCheck == "sll" \
+            or toCheck == "srl" or toCheck == "andi" or toCheck == "not" or toCheck == "move":
+        return True
+    else:
+        return False
 
 
 def InstructionFetch(inst):
@@ -371,7 +402,8 @@ def execution(instruct, reqRegisters, dtaFor):
 
     # need data from mem-wb stage
     if dtaFor[0] != -1 or dtaFor[1] != -1:
-        if 'MEM-WB' in data_forwarding_list[-1]:
+        if 'MEM-WB' in data_forwarding_list[-1] and not checkBranch(previous_registers[1][0]):
+
             if dtaFor[0] != -1:
                 adi = previous_registers[0].copy()
                 adi[2] = adi[3]

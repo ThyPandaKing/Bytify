@@ -6,10 +6,11 @@
 
 .globl main
 main:
-    li $t0 , 3
-    li $t1 , 1
-    add $t0 , $t0 , $t1
-    lw  $t2 , 0($t0)
-    move $t3 , $t1
-    div  $t0 , $t3 , $t0
+    li $t0 , 5
+BOI:
+    addi	$t0, $t0, -1		# $t0 = $t1 + 0
+    bne		$t0, $zero, BOI	    # if $t0 == $t1 then target
+
+
+    
     
