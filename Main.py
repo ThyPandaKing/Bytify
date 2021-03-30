@@ -965,11 +965,14 @@ class Table1:
 class Table2:
     def __init__(self, root):
         global info
-        cycle="The number of cycles taken are: "+str(my_clock+4)
-        stall="The number of stalls are: "+str(totalStalls)
-        cycles1 = Label(root, text=cycle, width=30,fg='black',bg='pink',padx='10',pady='10',font=boldFont)
+        if my_clock==0:
+           cycle = "The number of cycles taken are: " + str(my_clock )
+        else:
+           cycle = "The number of cycles taken are: " + str(my_clock + 4)
+        stall = "The number of stalls are: " + str(totalStalls)
+        cycles1 = Label(root, text=cycle, width=30, fg='black', bg='pink', padx='10', pady='10', font=boldFont)
         cycles1.grid(row=0, column=0)
-        stalls1 = Label(root, text=stall, width=30, fg='black',bg='light blue',padx='10',pady='10',font=boldFont)
+        stalls1 = Label(root, text=stall, width=30, fg='black', bg='light blue', padx='10', pady='10', font=boldFont)
         stalls1.grid(row=1, column=0)
         middle = Frame(root, bg='light green', width=16)
         middle.grid(row=2, column=0, sticky="ns")
@@ -982,6 +985,11 @@ class Table2:
                      xscrollcommand=h1.set,
                      yscrollcommand=v1.set)
         inst="     "
+        if my_clock==0:
+            text1.pack(side=TOP)
+            h1.config(command=text1.xview)
+            v1.config(command=text1.yview)
+            return
         for j in range(1,my_clock+5):
           if (j>=0 and j<=9):
             inst=inst+"C"+str(j)+"     "
@@ -1055,6 +1063,38 @@ class Table2:
         h1.config(command=text1.xview)
         v1.config(command=text1.yview)
 
+class Table3:
+    def __init__(self, root):
+      if is_data_forwarding_allowed==False:
+          cycle = "The availability of data forwarding is: FALSE"
+          cycles1 = Label(root, text=cycle, fg='black', bg='pink', padx='10', pady='10', font=boldFont)
+          cycles1.grid(row=0, column=0)
+      else:
+        cycle = "The availability of data forwarding is: TRUE"
+        heading = "THE DATA FORWARDING INFORMATION IS AS FOLLOWS"
+        cycles1 = Label(root, text=cycle, width=50, fg='black', bg='pink', padx='10', pady='10', font=boldFont)
+        cycles1.grid(row=0, column=0)
+        heading1 = Label(root, text=heading, width=50, fg='black', bg='light blue', padx='10', pady='10', font=boldFont)
+        heading1.grid(row=1, column=0)
+        middle = Frame(root, bg='light green', width=16)
+        middle.grid(row=2, column=0, sticky="ns")
+
+        h2 = Scrollbar(middle, orient='horizontal')
+        h2.pack(side=BOTTOM, fill=X)
+        v2 = Scrollbar(middle)
+        v2.pack(side=RIGHT, fill=Y)
+        text2 = Text(middle, width=180, height=35, wrap=NONE,
+                     xscrollcommand=h2.set,
+                     yscrollcommand=v2.set)
+        for j in range(0, len(data_forwarding_list)):
+            inst = str(j+1)+"     "
+            inst=inst+data_forwarding_list[j]
+            inst = inst + "\n"
+            text2.insert(END, inst)
+        text2.pack(side=TOP)
+        h2.config(command=text2.xview)
+        v2.config(command=text2.yview)
+
 
 def press(num):
     global PC
@@ -1090,6 +1130,7 @@ def press(num):
         t = Table(ctr_mid)
         t1 = Table1(ctr_right2)
         t2 = Table2(stalls)
+        t3 = Table3(data_forwarding)
         gui.mainloop()
     elif num == '2':
         if PC < len(Instructions):
@@ -1121,6 +1162,7 @@ def press(num):
             t = Table(ctr_mid)
             t1 = Table1(ctr_right2)
             t2 = Table2(stalls)
+            t3 = Table3(data_forwarding)
             gui.mainloop()
             if PC == len(Instructions):
                 return
@@ -1175,11 +1217,14 @@ center = Frame(tab1, bg='black', padx=3, pady=3)
 gui.grid_rowconfigure(1, weight=1)
 gui.grid_columnconfigure(0, weight=1)
 stalls=Frame(tabControl)
+data_forwarding=Frame(tabControl)
 
 tabControl.add(tab1, text='        EXECUTION OF THE INSTRUCTIONS           ')
-tabControl.add(stalls, text='        INFORMATION ABOUT STALLS,NUMBER OF CYCLES AND DATA FORWARDING     ')
+tabControl.add(stalls, text='        INFORMATION ABOUT STALLS AND NUMBER OF CYCLES     ')
+tabControl.add(data_forwarding, text='        INFORMATION ABOUT DATA FORWARDING     ')
 tabControl.pack(expand=1, fill="both")
 t2=Table2(stalls)
+t3=Table3(data_forwarding)
 
 center.grid(row=1, sticky="nsew")
 center.grid_rowconfigure(0, weight=1)
@@ -1247,6 +1292,8 @@ def submit():
     global Addres
     global space
     global my_clock
+    global data_forwarding_list
+    global totalStalls
 
     name = name_var.get()
     value1=value.get()
@@ -1254,8 +1301,10 @@ def submit():
     e1.delete(0,'end')
     e2.delete(0, 'end')
     info=[]
+    data_forwarding_list=[]
     space=0
     my_clock=0
+    totalStalls=0
     t2=Table2(stalls)
     instructions.delete(0,'end')
     if(value1=="Delete instruction"):
@@ -1296,6 +1345,8 @@ def submit():
     dataSegment=dataSegment1
     t = Table(ctr_mid)
     t1 = Table1(ctr_right2)
+    t2 = Table2(stalls)
+    t3 = Table3(data_forwarding)
     gui.mainloop()
 
 instructions = ttk.Combobox(ctr_left2, width=25, textvariable=value)
