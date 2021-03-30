@@ -117,6 +117,13 @@ def checkForStalls(instType, arr):
     global totalStalls
     no_stalls = 0
     # in arithemetic or bitwise instructions
+    if instType=="":
+        a = []
+        a.append(space)
+        a.append(no_stalls)
+        a.append(0)
+        info.append(a)
+        return[-1,-1]
     st = 1
     if checkBranch(instType):
         st = 0
@@ -302,6 +309,7 @@ def InstructionDecode(inst):
     global PC
     global last_pc_value
     if inst == "syscall":
+        checkForStalls("syscall",[])
         return execution("syscall", [], [-1, -1])
     idx = 0
     instType = ""
@@ -959,9 +967,9 @@ class Table2:
         global info
         cycle="The number of cycles taken are: "+str(my_clock+4)
         stall="The number of stalls are: "+str(totalStalls)
-        cycles1 = Label(root, text=cycle, width=30,fg='black',padx='10',pady='10')
+        cycles1 = Label(root, text=cycle, width=30,fg='black',bg='pink',padx='10',pady='10',font=boldFont)
         cycles1.grid(row=0, column=0)
-        stalls1 = Label(root, text=stall, width=30, fg='black',padx='10',pady='10')
+        stalls1 = Label(root, text=stall, width=30, fg='black',bg='light blue',padx='10',pady='10',font=boldFont)
         stalls1.grid(row=1, column=0)
         middle = Frame(root, bg='light green', width=16)
         middle.grid(row=2, column=0, sticky="ns")
@@ -1050,6 +1058,7 @@ class Table2:
 
 def press(num):
     global PC
+    global my_clock
     j = num
     if num == '1' and PC < len(Instructions):
         while 1:
@@ -1120,25 +1129,17 @@ def press(num):
 
 information=Tk()
 information.title("Information about pipelining")
-cycles = IntVar()
+information.geometry("400x200")
 def var_states():
    global information
    global is_data_forwarding_allowed
-   global my_clock
    var_1=var1.get()
    var_2=var2.get()
    if(var_1==1):
        is_data_forwarding_allowed=True
    if(var_2==1):
        is_data_forwarding_allowed=False
-   cycle=cycles.get()
-   my_clock=cycle
    information.destroy()
-ttk.Label(information, text = "Enter the number of clocks required to execute one command:",
-          font = ("Times New Roman", 10)).grid(column = 0,
-          row = 0, padx = 10, pady = 10)
-e2 = Entry(information,textvariable = cycles)
-e2.grid(row=0, column=1)
 Label(information, text="Is data forwarding allowed?").grid(row=1, sticky=W)
 var1 = IntVar()
 Checkbutton(information, text="Yes", variable=var1).grid(row=2, sticky=W)
@@ -1167,7 +1168,6 @@ console.geometry("+{}+{}".format(positionRight, positionDown))
 
 equation = StringVar()
 boldFont = tkFont.Font(size=10, weight="bold")
-
 
 tabControl = ttk.Notebook(gui)
 tab1 = ttk.Frame(tabControl)
