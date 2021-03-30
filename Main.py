@@ -8,7 +8,9 @@ Addres = {}
 MemAddres = {}
 PC = 0
 lastinstruction = 0
-
+space=-1
+no_stalls=0
+info=[]
 
 class stall:
     def __init__(self, ck, pc):
@@ -23,7 +25,7 @@ my_clock = 0
 previous_registers = 2*[4*[0]]
 stalls_list = []
 data_forwarding_list = []
-
+last_pc_value = 0
 
 dataSegment = 1024*[0]
 
@@ -61,6 +63,7 @@ Register = {
     "$fp": '0x0',         # Frame Pointer
     "$ra": '0x0'          # Return Address
 }
+Registers1=Register.copy()
 
 changedRegisters = {
     "$zero": 0, "$at": 0, "$v0": 0, "$v1": 0, "$a0": 0, "$a1": 0, "$a2": 0, "$a3": 0, "$t0": 0, "$t1": 0, "$t2": 0, "$t3": 0, "$t4": 0,
@@ -100,58 +103,144 @@ improveInstructions(Instructions)  # for branch instructions
 
 indx = FillMemory.FillMemory(Data, dataSegment, MemAddres)
 
+dataSegment1=dataSegment.copy()
 
 def checkForStalls(instType, arr):
     global previous_registers
     global my_clock
     global PC
+    global last_pc_value
+    global space
+    global no_stalls
+    global info
+    no_stalls=0
     # in arithemetic or bitwise instructions
 
-    if instType == "add" or instType == "sub" or instType == "mul" or instType == "div" \
-        or instType == 'addi' or instType == "and" or instType == "or" or instType == "sll" \
-            or instType == "srl" or instType == "andi" or instType == "not" or instType == "move":
-        if (instructions_till_now > 2 and (previous_registers[0][1] in arr[1:] or previous_registers[1][1] in arr[1:])) or (instructions_till_now == 2 and previous_registers[0][1] in arr[1:]):
+    if checkBranch(previous_registers[1][0]):
+        if last_pc_value+1 != PC - 1:
+            if is_data_forwarding_allowed == False:
+                my_clock += 3
+                no_stalls = 3
+                a = []
+                a.append(space)
+                a.append(no_stalls)
+                info.append(a)
+                space = space + 3
+                stalls_list.append(
+                    f'{4} , Due to Branch Statement for PC = {PC - 1} , clock = {my_clock - 4}')
+                return [-1, -1]
+            my_clock += 1
+            no_stalls = 1
+            a = []
+            a.append(space)
+            a.append(no_stalls)
+            info.append(a)
+            space=space+1
+            stalls_list.append(
+                f'{1} , Due to Wrong Branch Prediction for PC = {PC - 1} , clock = {my_clock - 1}')
+            data_forwarding_list.append(
+                f'ID-EXE → IF-ID for PC = {PC - 1}, clock = {my_clock - 1}')
+        return [-1, -1]
+
+    if checkArithmetic(instType):
+        if (instructions_till_now > 2 and (
+                previous_registers[0][1] in arr[1:] or previous_registers[1][1] in arr[1:])) or (
+                instructions_till_now == 2 and previous_registers[0][1] in arr[1:]):
 
             if is_data_forwarding_allowed == False:
 
-                my_clock += 4
+                my_clock += 3
+                no_stalls = 3
+                a = []
+                a.append(space)
+                a.append(no_stalls)
+                info.append(a)
+                space = space + 3
                 stalls_list.append(
-                    f'{4} , Due to Data Dependency for PC = {PC-1} , clock = {my_clock-4}')
+                    f'{4} , Due to Data Dependency for PC = {PC - 1} , clock = {my_clock - 4}')
                 return [-1, -1]
             else:
                 # no stalls, data will be forwarded
-
                 if previous_registers[0][1] in arr[1:]:
-                    if instructions_till_now > 2 and previous_registers[1][1] in arr[1:]:
+                    if instructions_till_now > 2 and previous_registers[1][1] in arr[1:] and previous_registers[0][1] != \
+                            previous_registers[1][1]:
                         data_forwarding_list.append(
-                            f'EXE-MEM → ID-EXE AND MEM-WB → ID-EXE for PC = {PC-1} , clock = {my_clock}')
+                            f'EXE-MEM → ID-EXE AND MEM-WB → ID-EXE for PC = {PC - 1} , clock = {my_clock}')
                         if 'lw' in previous_registers[1][0] or 'sw' in previous_registers[1][0]:
                             # print("my_clock")
                             my_clock += 1
+                            no_stalls = 1
+                            a = []
+                            a.append(space)
+                            a.append(no_stalls)
+                            info.append(a)
+                            space = space + 1
                             stalls_list.append(
-                                f'{1} , Due to Data Dependency on LW/SW for PC = {PC-1}, clock = {my_clock-1}')
-                            data_forwarding_list[-1] = f'MEM-WB → ID-EXE for PC = {PC-1}, clock = {my_clock}'
+                                f'{1} , Due to Data Dependency on LW/SW for PC = {PC - 1}, clock = {my_clock - 1}')
+                            data_forwarding_list[-1] = f'MEM-WB → ID-EXE for PC = {PC - 1}, clock = {my_clock}'
                             return [previous_registers[0][1], -1]
+                        a = []
+                        a.append(space)
+                        a.append(no_stalls)
+                        info.append(a)
                         return [previous_registers[0][1], previous_registers[1][1]]
                     if 'lw' in previous_registers[1][0] or 'sw' in previous_registers[1][0]:
                         my_clock += 1
+                        no_stalls = 1
+                        a = []
+                        a.append(space)
+                        a.append(no_stalls)
+                        info.append(a)
+                        space = space + 1
                         stalls_list.append(
-                            f'{1} , Due to Data Dependency on LW/SW for PC = {PC-1}, clock = {my_clock-1}')
+                            f'{1} , Due to Data Dependency on LW/SW for PC = {PC - 1}, clock = {my_clock - 1}')
                         data_forwarding_list.append(
-                            f'MEM-WB → ID-EXE for PC = {PC-1}, clock = {my_clock}')
+                            f'MEM-WB → ID-EXE for PC = {PC - 1}, clock = {my_clock}')
                         return [previous_registers[0][1], -1, -1]
                     data_forwarding_list.append(
-                        f'EXE-MEM → ID-EXE for PC = {PC-1}, clock = {my_clock}')
+                        f'EXE-MEM → ID-EXE for PC = {PC - 1}, clock = {my_clock}')
+                    a = []
+                    a.append(space)
+                    a.append(no_stalls)
+                    info.append(a)
                     return [previous_registers[0][1], -1]
                 else:
+                    a = []
+                    a.append(space)
+                    a.append(no_stalls)
+                    info.append(a)
                     data_forwarding_list.append(
-                        f'MEM-WB → ID-EXE for PC = {PC-1}, clock = {my_clock}')
+                        f'MEM-WB → ID-EXE for PC = {PC - 1}, clock = {my_clock}')
                     return [-1, previous_registers[1][1]]
 
         else:
+            a = []
+            a.append(space)
+            a.append(no_stalls)
+            info.append(a)
             return [-1, -1]
-
+    a = []
+    a.append(space)
+    a.append(no_stalls)
+    info.append(a)
     return [-1, -1]
+
+
+def checkBranch(toCheck):
+    if 'beq' in toCheck or 'bne' in toCheck or 'j' in toCheck:
+        return True
+    else:
+        return False
+
+
+def checkArithmetic(toCheck):
+    if toCheck == "add" or toCheck == "sub" or toCheck == "mul" or toCheck == "div" \
+            or toCheck == 'addi' or toCheck == "and" or toCheck == "or" or toCheck == "sll" \
+            or toCheck == "srl" or toCheck == "andi" or toCheck == "not" or toCheck == "move" \
+            or toCheck == 'slt' or toCheck == "li":
+        return True
+    else:
+        return False
 
 
 def InstructionFetch(inst):
@@ -163,6 +252,7 @@ def InstructionFetch(inst):
     global my_clock
     global previous_registers
     global instructions_till_now
+    global space
 
     k = str(str(PC+1)+'.0')
     l = str(str(PC+1)+'.50')
@@ -176,6 +266,7 @@ def InstructionFetch(inst):
     # previous_registers[0] contains the last instruction and [1] contains last to last inst
 
     my_clock += 1
+    space+=1
     instructions_till_now += 1
     previous_registers[1][0] = previous_registers[0][0]
     previous_registers[0][0] = inst
@@ -185,8 +276,9 @@ def InstructionFetch(inst):
 
 def InstructionDecode(inst):
     global PC
+    global last_pc_value
     if inst == "syscall":
-        return execution("syscall", [])
+        return execution("syscall", [], [-1, -1])
     idx = 0
     instType = ""
     t = inst.split()
@@ -350,11 +442,12 @@ def InstructionDecode(inst):
 
     # checking for dependencies and making decision according to the situation.
     dtaFor = checkForStalls(instType, arr)
-    temp = previous_registers[1].copy()
-    temp[1] = previous_registers[0][1]
-
+    last_pc_value = PC - 1
     previous_registers[1] = temp
-    previous_registers[0][1] = arr[0]
+    if not checkBranch(instType):
+        previous_registers[0][1] = arr[0]
+    else:
+        previous_registers[0][1] = "$dummy"
 
     return execution(instType, arr, dtaFor)
 
@@ -371,7 +464,8 @@ def execution(instruct, reqRegisters, dtaFor):
 
     # need data from mem-wb stage
     if dtaFor[0] != -1 or dtaFor[1] != -1:
-        if 'MEM-WB' in data_forwarding_list[-1]:
+        if 'MEM-WB' in data_forwarding_list[-1] and not checkBranch(previous_registers[1][0]):
+
             if dtaFor[0] != -1:
                 adi = previous_registers[0].copy()
                 adi[2] = adi[3]
@@ -606,7 +700,7 @@ def execution(instruct, reqRegisters, dtaFor):
 
         temp = int(Register[reqRegisters[2]], 16) > int(
             Register[reqRegisters[1]], 16)
-        return mem(instruct, reqRegisters, temp)
+        #return mem(instruct, reqRegisters, temp)
     elif (instruct == "syscall"):
         return mem(instruct, reqRegisters, 0)
 
@@ -622,6 +716,7 @@ def execution(instruct, reqRegisters, dtaFor):
 
 
 def mem(instructType, reqRegisters, temp):
+
     global PC
     if(len(reqRegisters) == 4):
         if(reqRegisters[3] == "lw"):
@@ -832,6 +927,68 @@ class Table1:
         v.config(command=text1.yview)
 
 
+class Table2:
+    def __init__(self, root):
+        global info
+        cycles1 = Label(root, text='The number of cycles taken are', width=30,fg='black',padx='10',pady='10')
+        cycles1.grid(row=0, column=0)
+        stalls1 = Label(root, text='The stalls are', width=30, fg='black',padx='10',pady='10')
+        stalls1.grid(row=1, column=0)
+        middle = Frame(root, bg='light green', width=16)
+        middle.grid(row=2, column=0, sticky="ns")
+
+        h1 = Scrollbar(middle, orient='horizontal')
+        h1.pack(side=BOTTOM, fill=X)
+        v1 = Scrollbar(middle)
+        v1.pack(side=RIGHT, fill=Y)
+        text1 = Text(middle, width=180, height=35, wrap=NONE,
+                     xscrollcommand=h1.set,
+                     yscrollcommand=v1.set)
+        inst="     "
+        for j in range(1,my_clock):
+          if (j>=0 and j<=9):
+            inst=inst+"C"+str(j)+"     "
+          if (j>=10 and j<=99):
+            inst=inst+"C"+str(j)+"    "
+          if (j>=100 and j<=999):
+            inst=inst+"C"+str(j)+"   "
+        inst = inst + "\n"
+        text1.insert(END, inst)
+        for j in range(0,len(info)):
+          inst=""
+          if(j>=0 and j<=9):
+            inst="I"+str(j)+"   "
+            for k in range(0,info[j][0]):
+                inst=inst+"       "
+          elif (j >= 10 and j <= 99):
+              inst = "I" + str(j) + "  "
+              for k in range(0, info[j][0]):
+                  inst = inst + "       "
+          elif (j >= 100 and j <= 999):
+              inst = "I" + str(j) + " "
+              for k in range(0, info[j][0]):
+                  inst = inst + "       "
+          for k in range(1, 2):
+                  if k == 1:
+                      inst = inst + "IF     "
+          for k in range(0,info[j][1]):
+                  inst = inst + "Stall  "
+          for k in range(2,6):
+                  if k == 2:
+                      inst = inst + "ID/RF  "
+                  if k == 3:
+                      inst = inst + "EXE    "
+                  if k == 4:
+                      inst = inst + "MEM    "
+                  if k == 5:
+                      inst = inst + "WB     "
+          inst=inst+"\n"
+          text1.insert(END, inst)
+        text1.pack(side=TOP)
+        h1.config(command=text1.xview)
+        v1.config(command=text1.yview)
+
+
 def press(num):
     global PC
     j = num
@@ -864,11 +1021,17 @@ def press(num):
                 break
         t = Table(ctr_mid)
         t1 = Table1(ctr_right2)
+        t2 = Table2(stalls)
         gui.mainloop()
     elif num == '2':
         if PC < len(Instructions):
             inst = Instructions[PC]
-
+            for j in range(0, len(Instructions)):
+                text.delete("1.0", "end")
+            for j in range(0, len(Instructions)):
+                inst1 = str(j) + ": " + Instructions[j] + "\n"
+                text.insert(END, inst1)
+            text.pack(side=TOP)
             ans = InstructionFetch(inst)
             if ans == (-2, -2):
                 root = Tk()
@@ -889,23 +1052,77 @@ def press(num):
 
             t = Table(ctr_mid)
             t1 = Table1(ctr_right2)
+            t2 = Table2(stalls)
             gui.mainloop()
             if PC == len(Instructions):
                 return
 
 
+
+information=Tk()
+information.title("Information about pipelining")
+cycles = IntVar()
+def var_states():
+   global information
+   global is_data_forwarding_allowed
+   global my_clock
+   var_1=var1.get()
+   var_2=var2.get()
+   if(var_1==1):
+       is_data_forwarding_allowed=True
+   if(var_2==1):
+       is_data_forwarding_allowed=False
+   cycle=cycles.get()
+   my_clock=cycle
+   information.destroy()
+ttk.Label(information, text = "Enter the number of clocks required to execute one command:",
+          font = ("Times New Roman", 10)).grid(column = 0,
+          row = 0, padx = 10, pady = 10)
+e2 = Entry(information,textvariable = cycles)
+e2.grid(row=0, column=1)
+Label(information, text="Is data forwarding allowed?").grid(row=1, sticky=W)
+var1 = IntVar()
+Checkbutton(information, text="Yes", variable=var1).grid(row=2, sticky=W)
+var2 = IntVar()
+Checkbutton(information, text="No", variable=var2).grid(row=3, sticky=W)
+Button(information, text='Submit', command=var_states).grid(row=4, sticky=W, pady=4)
+
+windowWidth = information.winfo_reqwidth()
+windowHeight = information.winfo_reqheight()
+positionRight = int(information.winfo_screenwidth() / 2 - windowWidth / 2)
+positionDown = int(information.winfo_screenheight() / 2 - windowHeight / 2)
+information.geometry("+{}+{}".format(positionRight, positionDown))
+information.mainloop()
+
+
+
 gui = Tk()
 gui.configure(background="light green")
 gui.title("BYTIFY")
+console = Tk()
+windowWidth = console.winfo_reqwidth()
+windowHeight = console.winfo_reqheight()
+positionRight = int(console.winfo_screenwidth() / 2 - windowWidth / 2)
+positionDown = int(console.winfo_screenheight() / 2 - windowHeight / 2)
+console.geometry("+{}+{}".format(positionRight, positionDown))
+
 equation = StringVar()
 boldFont = tkFont.Font(size=10, weight="bold")
-console = Tk()
-center = Frame(gui, bg='black', width=50, padx=3, pady=3)
+
+
+tabControl = ttk.Notebook(gui)
+tab1 = ttk.Frame(tabControl)
+center = Frame(tab1, bg='black', padx=3, pady=3)
 gui.grid_rowconfigure(1, weight=1)
 gui.grid_columnconfigure(0, weight=1)
+stalls=Frame(tabControl)
+
+tabControl.add(tab1, text='        EXECUTION OF THE INSTRUCTIONS           ')
+tabControl.add(stalls, text='        INFORMATION ABOUT STALLS,NUMBER OF CYCLES AND DATA FORWARDING     ')
+tabControl.pack(expand=1, fill="both")
+t2=Table2(stalls)
 
 center.grid(row=1, sticky="nsew")
-
 center.grid_rowconfigure(0, weight=1)
 center.grid_columnconfigure(1, weight=1)
 
@@ -924,11 +1141,11 @@ h = Scrollbar(ctr_left1, orient='horizontal')
 h.pack(side=BOTTOM, fill=X)
 v = Scrollbar(ctr_left1)
 v.pack(side=RIGHT, fill=Y)
-text = Text(ctr_left1, width=41, height=45, wrap=NONE,
+text = Text(ctr_left1, width=45, height=25, wrap=NONE,
             xscrollcommand=h.set,
             yscrollcommand=v.set)
 for j in range(0, len(Instructions)):
-    inst = Instructions[j]+"\n"
+    inst = str(j) + ": " + Instructions[j] + "\n"
     text.insert(END, inst)
 text.pack(side=TOP)
 h.config(command=text.xview)
@@ -945,13 +1162,104 @@ ctr_right2.grid(row=1, column=0, sticky="ns")
 t = Table(ctr_mid)
 t1 = Table1(ctr_right2)
 
+ctr_left2 = Frame(ctr_left, bg='light blue', width=50)
+ctr_left2.grid(row=3, column=0, sticky="wens")
+
+
+l1 = Label(ctr_left, text='CHOOSE THE OPTIONS FOR THE INSTRUCTION', width=40, bg='light pink',
+           fg='black', font=boldFont)  # added one Label
+l1.grid(row=2, column=0)
+
+ttk.Label(ctr_left2, text = "Change type:",
+          font = ("Times New Roman", 10)).grid(column = 0,
+          row = 0, padx = 10, pady = 25)
+
+name_var=StringVar()
+value=StringVar()
+pc_var=StringVar()
+def submit():
+    global Instructions
+    global PC
+    global Registers1
+    global Register
+    global dataSegment
+    global dataSegment1
+    global Addres
+
+    name = name_var.get()
+    value1=value.get()
+    pcvalue=pc_var.get()
+    e1.delete(0,'end')
+    e2.delete(0, 'end')
+    instructions.delete(0,'end')
+    if(value1=="Delete instruction"):
+       for j in range(0, len(Instructions)):
+        text.delete("0.0","end")
+       Instructions.pop(int(pcvalue))
+       improveInstructions(Instructions)
+       for j in range(0, len(Instructions)):
+          inst = str(j) + ": " + Instructions[j] + "\n"
+          text.insert(END, inst)
+       keys = list(Addres.keys())
+       for j in range(0,len(Addres)):
+           if(Addres[keys[j]]>int(pcvalue)):
+               Addres[keys[j]]=Addres[keys[j]]-1
+       text.pack(side=TOP)
+    elif (value1 == "Add instruction"):
+        for j in range(0, len(Instructions)):
+            text.delete("1.0", "end")
+        Instructions.insert(int(pcvalue),name)
+        for j in range(0, len(Instructions)):
+            inst = str(j) + ": " + Instructions[j] + "\n"
+            text.insert(END, inst)
+        keys = list(Addres.keys())
+        for j in range(0, len(Addres)):
+            if (Addres[keys[j]] > int(pcvalue)):
+                Addres[keys[j]] = Addres[keys[j]] + 1
+        text.pack(side=TOP)
+    elif (value1 == "Replace instruction"):
+        for j in range(0, len(Instructions)):
+            text.delete("1.0", "end")
+        Instructions[int(pcvalue)]=name
+        for j in range(0, len(Instructions)):
+            inst = str(j) + ": " + Instructions[j] + "\n"
+            text.insert(END, inst)
+        text.pack(side=TOP)
+    PC=0
+    Register=Registers1
+    dataSegment=dataSegment1
+    t = Table(ctr_mid)
+    t1 = Table1(ctr_right2)
+    gui.mainloop()
+
+instructions = ttk.Combobox(ctr_left2, width=25, textvariable=value)
+instructions['values'] = ["Replace instruction","Delete instruction","Add instruction"]
+instructions.grid(column=1, row=0)
+instructions.current()
+
+ttk.Label(ctr_left2, text = "Enter the PC value:",
+          font = ("Times New Roman", 10)).grid(column = 0,
+          row = 2, padx = 10, pady = 10)
+e2 = Entry(ctr_left2,textvariable = pc_var)
+e2.grid(row=2, column=1)
+
+
+ttk.Label(ctr_left2, text = "Enter the instruction:",
+          font = ("Times New Roman", 10)).grid(column = 0,
+          row = 3, padx = 10, pady = 10)
+e1 = Entry(ctr_left2,textvariable = name_var)
+e1.grid(row=3, column=1)
+submitbutton=Button(ctr_left2,text = 'Submit', command = submit)
+
+submitbutton.grid(row=4,column=1)
 
 onestep = Button(ctr_mid, text='ONE STEP EXECUTION', fg='white', bg='black', font=boldFont,
-                 command=lambda: press('1'), height=1, width=40)
+                 command=lambda: press('1'), height=1, width=36)
 onestep.grid(row=0, column=0)
 stepbystep = Button(ctr_mid, text='STEP BY STEP EXECUTION', fg='white', bg='black', font=boldFont,
-                    command=lambda: press('2'), height=1, width=40)
+                    command=lambda: press('2'), height=1, width=36)
 stepbystep.grid(row=0, column=1)
 
 console.title("Console")
+
 gui.mainloop()
