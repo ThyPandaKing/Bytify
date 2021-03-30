@@ -443,6 +443,9 @@ def InstructionDecode(inst):
     # checking for dependencies and making decision according to the situation.
     dtaFor = checkForStalls(instType, arr)
     last_pc_value = PC - 1
+
+    temp = previous_registers[1].copy()
+    temp[1] = previous_registers[0][1]
     previous_registers[1] = temp
     if not checkBranch(instType):
         previous_registers[0][1] = arr[0]
