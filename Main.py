@@ -107,11 +107,9 @@ def checkForStalls(instType, arr):
     global PC
     global last_pc_value
     # in arithemetic or bitwise instructions
-    if checkBranch(instType):
-        last_pc_value = PC
 
     if checkBranch(previous_registers[1][0]):
-        if last_pc_value != PC-1:
+        if last_pc_value + 1 != PC-1:
             if is_data_forwarding_allowed == False:
 
                 my_clock += 4
@@ -122,7 +120,8 @@ def checkForStalls(instType, arr):
             stalls_list.append(
                 f'{1} , Due to Wrong Branch Prediction for PC = {PC-1} , clock = {my_clock-1}')
             data_forwarding_list.append(
-                f'ID-EXE → IF-ID for PC = {PC-1}, clock = {my_clock}')
+                f'ID-EXE → IF-ID for PC = {PC-1}, clock = {my_clock-1}')
+        return [-1, -1]
 
     if checkArithmetic(instType):
         if (instructions_till_now > 2 and (previous_registers[0][1] in arr[1:] or previous_registers[1][1] in arr[1:])) or (instructions_till_now == 2 and previous_registers[0][1] in arr[1:]):
@@ -137,7 +136,7 @@ def checkForStalls(instType, arr):
                 # no stalls, data will be forwarded
 
                 if previous_registers[0][1] in arr[1:]:
-                    if instructions_till_now > 2 and previous_registers[1][1] in arr[1:]:
+                    if instructions_till_now > 2 and previous_registers[1][1] in arr[1:] and previous_registers[0][1] != previous_registers[1][1]:
                         data_forwarding_list.append(
                             f'EXE-MEM → ID-EXE AND MEM-WB → ID-EXE for PC = {PC-1} , clock = {my_clock}')
                         if 'lw' in previous_registers[1][0] or 'sw' in previous_registers[1][0]:
@@ -179,7 +178,7 @@ def checkBranch(toCheck):
 def checkArithmetic(toCheck):
     if toCheck == "add" or toCheck == "sub" or toCheck == "mul" or toCheck == "div" \
             or toCheck == 'addi' or toCheck == "and" or toCheck == "or" or toCheck == "sll" \
-            or toCheck == "srl" or toCheck == "andi" or toCheck == "not" or toCheck == "move":
+            or toCheck == "srl" or toCheck == "andi" or toCheck == "not" or toCheck == "move" or toCheck == 'slt' or toCheck == 'li':
         return True
     else:
         return False
@@ -216,8 +215,9 @@ def InstructionFetch(inst):
 
 def InstructionDecode(inst):
     global PC
+    global last_pc_value
     if inst == "syscall":
-        return execution("syscall", [])
+        return execution("syscall", [], [-1, -1])
     idx = 0
     instType = ""
     t = inst.split()
@@ -381,11 +381,15 @@ def InstructionDecode(inst):
 
     # checking for dependencies and making decision according to the situation.
     dtaFor = checkForStalls(instType, arr)
+    last_pc_value = PC - 1
+
     temp = previous_registers[1].copy()
     temp[1] = previous_registers[0][1]
-
     previous_registers[1] = temp
-    previous_registers[0][1] = arr[0]
+    if not checkBranch(instType):
+        previous_registers[0][1] = arr[0]
+    else:
+        previous_registers[0][1] = "$dummy"
 
     return execution(instType, arr, dtaFor)
 
@@ -638,7 +642,7 @@ def execution(instruct, reqRegisters, dtaFor):
 
         temp = int(Register[reqRegisters[2]], 16) > int(
             Register[reqRegisters[1]], 16)
-        return mem(instruct, reqRegisters, temp)
+        # return mem(instruct, reqRegisters, temp)
     elif (instruct == "syscall"):
         return mem(instruct, reqRegisters, 0)
 
@@ -654,6 +658,7 @@ def execution(instruct, reqRegisters, dtaFor):
 
 
 def mem(instructType, reqRegisters, temp):
+
     global PC
     if(len(reqRegisters) == 4):
         if(reqRegisters[3] == "lw"):
