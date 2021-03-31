@@ -772,10 +772,6 @@ def mem(instructType, reqRegisters, temp):
         previous_registers[1] = tp
         previous_registers[0][3] = int(Register[reqRegisters[0]], 16)
 
-        print(previous_registers)
-        print(stalls_list)
-        print(data_forwarding_list)
-        print(my_clock)
     else:
         tp = previous_registers[1].copy()
         tp[3] = previous_registers[0][3]
@@ -783,10 +779,6 @@ def mem(instructType, reqRegisters, temp):
         previous_registers[1] = tp
         previous_registers[0][3] = temp
 
-        print(previous_registers)
-        print(stalls_list)
-        print(data_forwarding_list)
-        print(my_clock)
         return writeBack(instructType, reqRegisters, temp)
 
 
