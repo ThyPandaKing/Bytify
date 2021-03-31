@@ -27,4 +27,9 @@ The project mainly focus on building a **Assembly language simulator** with **MI
 - Adding run time error detection methods.
 - Making all the 5 functions of pipelining parallel to implement pipelining.
 
+### PIPELINING IS IMPLEMENTED
+
+- Check `Pipelining.md `   for more details
+
 ### Bubble Sort code is given to test
+

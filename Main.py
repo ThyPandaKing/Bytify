@@ -12,6 +12,7 @@ space=-1
 no_stalls=0
 totalStalls=0
 info=[]
+infostall=[]
 
 class stall:
     def __init__(self, ck, pc):
@@ -139,8 +140,12 @@ def checkForStalls(instType, arr):
                 a.append(0)
                 info.append(a)
                 space = space + 3
+                b=[]
+                b.append(PC-1)
+                b.append(3)
+                infostall.append(b)
                 stalls_list.append(
-                    f'{4} , Due to Branch Statement for PC = {PC - 1} , clock = {my_clock - 4}')
+                    f'{3} , Due to Branch Statement for PC = {PC - 1} , clock = {my_clock - 4}')
                 return [-1, -1]
             my_clock += 1
             totalStalls += 1
@@ -151,6 +156,10 @@ def checkForStalls(instType, arr):
             a.append(1)
             info.append(a)
             space = space+1
+            b = []
+            b.append(PC - 1)
+            b.append(1)
+            infostall.append(b)
             stalls_list.append(
                 f'{1} , Due to Wrong Branch Prediction for PC = {PC - 1} , clock = {my_clock - 1}')
             data_forwarding_list.append(
@@ -178,8 +187,12 @@ def checkForStalls(instType, arr):
             a.append(0)
             info.append(a)
             space = space + 3
+            b = []
+            b.append(PC - 1)
+            b.append(3)
+            infostall.append(b)
             stalls_list.append(
-                f'{4} , Due to Data Dependency for PC = {PC - 1} , clock = {my_clock - 4}')
+                f'{3} , Due to Data Dependency for PC = {PC - 1} , clock = {my_clock - 4}')
             return [-1, -1]
         else:
             # no stalls, data will be forwarded
@@ -199,6 +212,10 @@ def checkForStalls(instType, arr):
                         a.append(0)
                         info.append(a)
                         space = space + 1
+                        b = []
+                        b.append(PC - 1)
+                        b.append(1)
+                        infostall.append(b)
                         stalls_list.append(
                             f'{1} , Due to Data Dependency on LW/SW for PC = {PC - 1}, clock = {my_clock - 1}')
                         data_forwarding_list[-1] = f'MEM-WB → ID-EXE for PC = {PC - 1}, clock = {my_clock}'
@@ -219,6 +236,10 @@ def checkForStalls(instType, arr):
                     a.append(0)
                     info.append(a)
                     space = space + 1
+                    b = []
+                    b.append(PC - 1)
+                    b.append(1)
+                    infostall.append(b)
                     stalls_list.append(
                         f'{1} , Due to Data Dependency on LW/SW for PC = {PC - 1}, clock = {my_clock - 1}')
                     data_forwarding_list.append(
@@ -959,15 +980,20 @@ class Table2:
         global info
         if my_clock==0:
            cycle = "The number of cycles taken are: " + str(my_clock )
+           ipc="Instructions per cycle(IPC): 0"
         else:
            cycle = "The number of cycles taken are: " + str(my_clock + 4)
+           ip=len(info)/(my_clock+4)
+           ipc = "Instructions per cycle(IPC): "+str(ip)
         stall = "The number of stalls are: " + str(totalStalls)
-        cycles1 = Label(root, text=cycle, width=30, fg='black', bg='pink', padx='10', pady='10', font=boldFont)
+        cycles1 = Label(root, text=cycle, width=80, fg='black', bg='pink', padx='10', pady='10', font=boldFont)
         cycles1.grid(row=0, column=0)
-        stalls1 = Label(root, text=stall, width=30, fg='black', bg='light blue', padx='10', pady='10', font=boldFont)
-        stalls1.grid(row=1, column=0)
+        ipc1 = Label(root, text=ipc, width=80, fg='black', bg='light blue', padx='10', pady='10', font=boldFont)
+        ipc1.grid(row=1, column=0)
+        stalls1 = Label(root, text=stall, width=80, fg='black', bg='pink', padx='10', pady='10', font=boldFont)
+        stalls1.grid(row=2, column=0)
         middle = Frame(root, bg='light green', width=16)
-        middle.grid(row=2, column=0, sticky="ns")
+        middle.grid(row=3, column=0, sticky="ns")
 
         h1 = Scrollbar(middle, orient='horizontal')
         h1.pack(side=BOTTOM, fill=X)
@@ -982,13 +1008,17 @@ class Table2:
             h1.config(command=text1.xview)
             v1.config(command=text1.yview)
             return
+        o=0
         for j in range(1,my_clock+5):
           if (j>=0 and j<=9):
             inst=inst+"C"+str(j)+"     "
+            o=o+7
           if (j>=10 and j<=99):
             inst=inst+"C"+str(j)+"    "
+            o=o+7
           if (j>=100 and j<=999):
             inst=inst+"C"+str(j)+"   "
+            o=o+7
         inst = inst + "\n"
         text1.insert(END, inst)
         for j in range(0,len(info)):
@@ -1051,38 +1081,72 @@ class Table2:
           n=str(str(j + 2) + "." + str(l))
           text1.tag_add("start", m, n)
           text1.tag_config("start", background="red")
+          r = str(j+2)+".0"
+          s = str(j+2)+".4"
+          text1.tag_add("inst",r,s)
+          text1.tag_config("inst", background="light green")
+        p = "1.0"
+        q = "1." + str(o+2)
+        text1.tag_add("cycle", p, q)
+        text1.tag_config("cycle", background="light green")
         text1.pack(side=TOP)
         h1.config(command=text1.xview)
         v1.config(command=text1.yview)
 
 class Table3:
     def __init__(self, root):
-      if is_data_forwarding_allowed==False:
-          cycle = "The availability of data forwarding is: FALSE"
-          cycles1 = Label(root, text=cycle, fg='black', bg='pink', padx='10', pady='10', font=boldFont)
-          cycles1.grid(row=0, column=0)
-      else:
-        cycle = "The availability of data forwarding is: TRUE"
-        heading = "THE DATA FORWARDING INFORMATION IS AS FOLLOWS"
+        cycle = "The number of stalls are: "+str(totalStalls)
+        heading = "THE STALLS OCCURED AT THE FOLLOWING INSTRUCTIONS"
         cycles1 = Label(root, text=cycle, width=50, fg='black', bg='pink', padx='10', pady='10', font=boldFont)
         cycles1.grid(row=0, column=0)
-        heading1 = Label(root, text=heading, width=50, fg='black', bg='light blue', padx='10', pady='10', font=boldFont)
+        heading1 = Label(root, text=heading, width=50, fg='black', bg='light blue', padx='10', pady='10',
+                             font=boldFont)
         heading1.grid(row=1, column=0)
+        middle1 = Frame(root, bg='light green', width=16)
+        middle1.grid(row=2, column=0, sticky="ns")
+
+        h3 = Scrollbar(middle1, orient='horizontal')
+        h3.pack(side=BOTTOM, fill=X)
+        v3 = Scrollbar(middle1)
+        v3.pack(side=RIGHT, fill=Y)
+        text3 = Text(middle1, width=90, height=35, wrap=NONE,
+                         xscrollcommand=h3.set,
+                         yscrollcommand=v3.set)
+        for j in range(0, len(infostall)):
+                inst = str(j + 1) + "     "
+                inst = inst +str(infostall[j][1])+" stall(s) - "+str(Instructions[infostall[j][0]])
+                inst = inst + "\n"
+                text3.insert(END, inst)
+        text3.pack(side=TOP)
+        h3.config(command=text3.xview)
+        v3.config(command=text3.yview)
+        if is_data_forwarding_allowed == False:
+            cycle = "The availability of data forwarding is: FALSE"
+            cycles1 = Label(root, text=cycle, fg='black', bg='pink', padx='10', pady='10', font=boldFont)
+            cycles1.grid(row=0, column=1)
+        else:
+            cycle = "The availability of data forwarding is: TRUE"
+            heading = "THE DATA FORWARDING INFORMATION IS AS FOLLOWS"
+            cycles1 = Label(root, text=cycle, width=50, fg='black', bg='pink', padx='10', pady='10', font=boldFont)
+            cycles1.grid(row=0, column=1)
+            heading1 = Label(root, text=heading, width=50, fg='black', bg='light blue', padx='10', pady='10',
+                             font=boldFont)
+            heading1.grid(row=1, column=1)
         middle = Frame(root, bg='light green', width=16)
-        middle.grid(row=2, column=0, sticky="ns")
+        middle.grid(row=2, column=1, sticky="ns")
 
         h2 = Scrollbar(middle, orient='horizontal')
         h2.pack(side=BOTTOM, fill=X)
         v2 = Scrollbar(middle)
         v2.pack(side=RIGHT, fill=Y)
-        text2 = Text(middle, width=180, height=35, wrap=NONE,
-                     xscrollcommand=h2.set,
-                     yscrollcommand=v2.set)
+        text2 = Text(middle, width=90, height=35, wrap=NONE,
+                         xscrollcommand=h2.set,
+                         yscrollcommand=v2.set)
         for j in range(0, len(data_forwarding_list)):
-            inst = str(j+1)+"     "
-            inst=inst+data_forwarding_list[j]
-            inst = inst + "\n"
-            text2.insert(END, inst)
+                inst = str(j + 1) + "     "
+                inst = inst + data_forwarding_list[j]
+                inst = inst + "\n"
+                text2.insert(END, inst)
         text2.pack(side=TOP)
         h2.config(command=text2.xview)
         v2.config(command=text2.yview)
@@ -1208,8 +1272,8 @@ tab1 = ttk.Frame(tabControl)
 center = Frame(tab1, bg='black', padx=3, pady=3)
 gui.grid_rowconfigure(1, weight=1)
 gui.grid_columnconfigure(0, weight=1)
-stalls=Frame(tabControl)
-data_forwarding=Frame(tabControl)
+stalls=Frame(tabControl,bg='black')
+data_forwarding=Frame(tabControl,bg='light green')
 
 tabControl.add(tab1, text='        EXECUTION OF THE INSTRUCTIONS           ')
 tabControl.add(stalls, text='        INFORMATION ABOUT STALLS AND NUMBER OF CYCLES     ')
@@ -1286,6 +1350,8 @@ def submit():
     global my_clock
     global data_forwarding_list
     global totalStalls
+    global stalls_list
+    global infostall
 
     name = name_var.get()
     value1=value.get()
@@ -1294,6 +1360,8 @@ def submit():
     e2.delete(0, 'end')
     info=[]
     data_forwarding_list=[]
+    stalls_list=[]
+    infostall=[]
     space=0
     my_clock=0
     totalStalls=0
