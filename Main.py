@@ -1352,6 +1352,7 @@ def submit():
     global totalStalls
     global stalls_list
     global infostall
+    global previous_registers
 
     name = name_var.get()
     value1=value.get()
@@ -1362,7 +1363,8 @@ def submit():
     data_forwarding_list=[]
     stalls_list=[]
     infostall=[]
-    space=0
+    previous_registers= 2*[4*[0]]
+    space=-1
     my_clock=0
     totalStalls=0
     t2=Table2(stalls)
