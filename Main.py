@@ -3,6 +3,7 @@ import memorySegment as FillMemory
 from tkinter import *
 from tkinter import font as tkFont
 from tkinter import ttk
+from tkinter.filedialog import askopenfilename
 
 Addres = {}
 MemAddres = {}
@@ -13,6 +14,8 @@ no_stalls=0
 totalStalls=0
 info=[]
 infostall=[]
+Instructions=[]
+Data=[]
 
 class stall:
     def __init__(self, ck, pc):
@@ -98,14 +101,6 @@ def improveInstructions(Instructions):
     for tep in temp:
         Instructions.remove(tep)
 
-
-Instructions, Data = InputFile.InputFile()
-
-improveInstructions(Instructions)  # for branch instructions
-
-indx = FillMemory.FillMemory(Data, dataSegment, MemAddres)
-
-dataSegment1=dataSegment.copy()
 
 def checkForStalls(instType, arr):
     global previous_registers
@@ -1002,6 +997,7 @@ class Table2:
         text1 = Text(middle, width=180, height=35, wrap=NONE,
                      xscrollcommand=h1.set,
                      yscrollcommand=v1.set)
+
         inst="     "
         if my_clock==0:
             text1.pack(side=TOP)
@@ -1155,6 +1151,19 @@ class Table3:
 def press(num):
     global PC
     global my_clock
+    global info
+    global Instructions
+    global Registers1
+    global Register
+    global dataSegment
+    global dataSegment1
+    global Addres
+    global space
+    global data_forwarding_list
+    global totalStalls
+    global stalls_list
+    global infostall
+    global previous_registers
     j = num
     if num == '1' and PC < len(Instructions):
         while 1:
@@ -1222,6 +1231,29 @@ def press(num):
             gui.mainloop()
             if PC == len(Instructions):
                 return
+    elif num == '3':
+        info = []
+        data_forwarding_list = []
+        stalls_list = []
+        infostall = []
+        previous_registers = 2 * [4 * [0]]
+        space = -1
+        my_clock = 0
+        totalStalls = 0
+        t2 = Table2(stalls)
+        PC = 0
+        Register = Registers1.copy()
+        dataSegment = dataSegment1.copy()
+        for j in range(0, len(Instructions)):
+            text.delete("0.0", "end")
+        for j in range(0, len(Instructions)):
+            inst = str(j) + ": " + Instructions[j] + "\n"
+            text.insert(END, inst)
+        t = Table(ctr_mid)
+        t1 = Table1(ctr_right2)
+        t2 = Table2(stalls)
+        t3 = Table3(data_forwarding)
+        gui.mainloop()
 
 
 
@@ -1264,6 +1296,49 @@ positionRight = int(console.winfo_screenwidth() / 2 - windowWidth / 2)
 positionDown = int(console.winfo_screenheight() / 2 - windowHeight / 2)
 console.geometry("+{}+{}".format(positionRight, positionDown))
 
+
+def OpenFile():
+    global Instructions
+    global Data
+    global indx
+    global dataSegment1
+    global dataSegment
+    global MemAddres
+    name = askopenfilename()
+    Instructions, Data = InputFile.InputFile(name)
+    improveInstructions(Instructions)
+    indx = FillMemory.FillMemory(Data, dataSegment, MemAddres)
+    dataSegment1 = dataSegment.copy()
+    press('3')
+
+def NewFile():
+    global Instructions
+    global Data
+    global indx
+    global dataSegment1
+    global dataSegment
+    global MemAddres
+    dataSegment = 1024 * [0]
+    name = askopenfilename()
+    Instructions, Data = InputFile.InputFile(name)
+    improveInstructions(Instructions)
+    indx = FillMemory.FillMemory(Data, dataSegment, MemAddres)
+    dataSegment1 = dataSegment.copy()
+    press('3')
+
+
+menu = Menu(gui)
+gui.config(menu=menu)
+filemenu = Menu(menu)
+menu.add_cascade(label='File', menu=filemenu)
+filemenu.add_command(label='Open...', command=OpenFile)
+filemenu.add_command(label='New',command=NewFile)
+filemenu.add_separator()
+filemenu.add_command(label='Exit', command=gui.quit)
+helpmenu = Menu(menu)
+menu.add_cascade(label='Help', menu=helpmenu)
+helpmenu.add_command(label='About')
+
 equation = StringVar()
 boldFont = tkFont.Font(size=10, weight="bold")
 
@@ -1304,6 +1379,7 @@ v.pack(side=RIGHT, fill=Y)
 text = Text(ctr_left1, width=45, height=25, wrap=NONE,
             xscrollcommand=h.set,
             yscrollcommand=v.set)
+
 for j in range(0, len(Instructions)):
     inst = str(j) + ": " + Instructions[j] + "\n"
     text.insert(END, inst)
@@ -1403,8 +1479,8 @@ def submit():
             text.insert(END, inst)
         text.pack(side=TOP)
     PC=0
-    Register=Registers1
-    dataSegment=dataSegment1
+    Register=Registers1.copy()
+    dataSegment=dataSegment1.copy()
     t = Table(ctr_mid)
     t1 = Table1(ctr_right2)
     t2 = Table2(stalls)
@@ -1439,6 +1515,11 @@ stepbystep = Button(ctr_mid, text='STEP BY STEP EXECUTION', fg='white', bg='blac
                     command=lambda: press('2'), height=1, width=36)
 stepbystep.grid(row=0, column=1)
 
+reload = Button(ctr_mid, text='RESTART', fg='white', bg='black', font=boldFont,
+                    command=lambda: press('3'), height=1, width=20)
+reload.grid(row=3, column=1)
+
 console.title("Console")
+
 
 gui.mainloop()
