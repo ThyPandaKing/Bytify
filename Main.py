@@ -8,6 +8,8 @@ from tkinter.filedialog import askopenfilename
 Addres = {}
 MemAddres = {}
 PC = 0
+
+# variables for pipelining (GUI)
 lastinstruction = 0
 space = -1
 no_stalls = 0
@@ -17,12 +19,15 @@ infostall = []
 Instructions = []
 Data = []
 
-
-class stall:
-    def __init__(self, ck, pc):
-        self.clock = ck
-        self.at_instruction = pc
-
+# variables for cache
+cache_size = 0  # bytes
+block_size = 0  # bytes
+associativity = 0
+clocks_for_l2 = 0
+clocks_for_main_mem = 0
+set_number = 0
+main_memory_access_time = 0
+second_cache_access_time = 0
 
 # variables used for pipelining
 instructions_till_now = 0
@@ -32,6 +37,7 @@ previous_registers = 2*[4*[0]]
 stalls_list = []
 data_forwarding_list = []
 last_pc_value = 0
+lastpc = 0
 
 dataSegment = 1024*[0]
 
@@ -78,6 +84,121 @@ changedRegisters = {
 }
 
 
+class cache_block:
+
+    def __init__(self, block_siz):
+        self.clock = -1
+        self.tag = 0
+        self.blocks = block_siz*[0]
+
+
+class cache_set:
+    def __init__(self, associativity_for_this, block_siz):
+        self.set_arr = associativity_for_this*[cache_block(block_siz)]
+
+
+cache_main = set_number * [cache_set(associativity, block_size)]
+
+# given address , and proper bit size of 3 parameters returns all the 3 parameters
+
+
+def address_to_values(address, offset_bits, index_bits):
+    index = 0
+    offset = 0
+    tag = 0
+    temp = []
+    ind = 0
+    while ind < offset_bits:
+        ind += 1
+        temp.append(address % 2)
+        address /= 2
+
+    ind = 1
+    for i in temp:
+        offset += i*ind
+        ind *= 2
+
+    temp = []
+    ind = 0
+    while ind < index_bits:
+        ind += 1
+        temp.append(address % 2)
+        address /= 2
+
+    ind = 1
+    for i in temp:
+        index += i*ind
+        ind *= 2
+
+    tag = address
+
+    return tag, index, offset
+
+
+def set_finder(index):
+    global cache_main
+    return cache_main[index]
+
+
+def search_tag(tag, set_to_search: cache_set):
+
+    for st in set_to_search.set_arr:
+        if st.tag == tag:
+            return st.blocks
+
+    return -1
+
+
+def find_offset(offset, block: cache_block):
+
+    return block[offset]
+
+
+def find_from_next(address, set_to_be_replaced: cache_set, from_main_mem):
+    global block_size
+    global my_clock
+    global stalls_list
+    global main_memory_access_time
+    global second_cache_access_time
+
+    if from_main_mem == True:
+        new_block = cache_block
+        idx = block_size
+        while idx < block_size:
+            new_block.blocks.append(dataSegment[address+idx])
+            idx += 1
+
+        nw_tag, nw_index, nw_offset = address_to_values(address)
+
+        new_block.tag = nw_tag
+
+        my_clock += main_memory_access_time
+        new_block.clock = my_clock
+        stalls_list.append(
+            f'{main_memory_access_time - 1} , Due to Branch Statement for PC = {PC - 1} , clock = {my_clock - main_memory_access_time}')
+
+        LRU(set_to_be_replaced, new_block)
+
+        return dataSegment[address]
+
+
+# will first of all check whole set then find minimum in it, replace it
+def LRU(set_to_check: cache_set, new_block: cache_block):
+    pass
+
+# will update the main memory (check for input parameters to take)
+
+
+def update_block_in_main_mem():
+    pass
+
+
+class stall:
+    def __init__(self, ck, pc):
+        self.clock = ck
+        self.at_instruction = pc
+
+
 def improveInstructions(Instructions):
     pc = 0
     temp = []
@@ -112,6 +233,7 @@ def checkForStalls(instType, arr):
     global no_stalls
     global info
     global totalStalls
+    global lastinstruction
     no_stalls = 0
     # in arithemetic or bitwise instructions
     if instType == "":
@@ -119,6 +241,7 @@ def checkForStalls(instType, arr):
         a.append(space)
         a.append(no_stalls)
         a.append(0)
+        a.append(lastpc)
         info.append(a)
         return[-1, -1]
     st = 1
@@ -134,11 +257,13 @@ def checkForStalls(instType, arr):
                 a.append(space)
                 a.append(no_stalls)
                 a.append(0)
+                a.append(lastpc)
                 info.append(a)
                 space = space + 3
                 b = []
                 b.append(PC-1)
                 b.append(3)
+                b.append(lastpc)
                 infostall.append(b)
                 stalls_list.append(
                     f'{3} , Due to Branch Statement for PC = {PC - 1} , clock = {my_clock - 4}')
@@ -150,11 +275,13 @@ def checkForStalls(instType, arr):
             a.append(space)
             a.append(no_stalls)
             a.append(1)
+            a.append(lastpc)
             info.append(a)
             space = space+1
             b = []
             b.append(PC - 1)
             b.append(1)
+            b.append(lastpc)
             infostall.append(b)
             stalls_list.append(
                 f'{1} , Due to Wrong Branch Prediction for PC = {PC - 1} , clock = {my_clock - 1}')
@@ -165,6 +292,7 @@ def checkForStalls(instType, arr):
         a.append(space)
         a.append(no_stalls)
         a.append(0)
+        a.append(lastpc)
         info.append(a)
         return [-1, -1]
 
@@ -181,11 +309,13 @@ def checkForStalls(instType, arr):
             a.append(space)
             a.append(no_stalls)
             a.append(0)
+            a.append(lastpc)
             info.append(a)
             space = space + 3
             b = []
             b.append(PC - 1)
             b.append(3)
+            b.append(lastpc)
             infostall.append(b)
             stalls_list.append(
                 f'{3} , Due to Data Dependency for PC = {PC - 1} , clock = {my_clock - 4}')
@@ -206,11 +336,13 @@ def checkForStalls(instType, arr):
                         a.append(space)
                         a.append(no_stalls)
                         a.append(0)
+                        a.append(lastpc)
                         info.append(a)
                         space = space + 1
                         b = []
                         b.append(PC - 1)
                         b.append(1)
+                        b.append(lastpc)
                         infostall.append(b)
                         stalls_list.append(
                             f'{1} , Due to Data Dependency on LW/SW for PC = {PC - 1}, clock = {my_clock - 1}')
@@ -220,6 +352,7 @@ def checkForStalls(instType, arr):
                     a.append(space)
                     a.append(no_stalls)
                     a.append(0)
+                    a.append(lastpc)
                     info.append(a)
                     return [previous_registers[0][1], previous_registers[1][1]]
                 if 'lw' in previous_registers[1][0]:
@@ -230,11 +363,13 @@ def checkForStalls(instType, arr):
                     a.append(space)
                     a.append(no_stalls)
                     a.append(0)
+                    a.append(lastpc)
                     info.append(a)
                     space = space + 1
                     b = []
                     b.append(PC - 1)
                     b.append(1)
+                    b.append(lastpc)
                     infostall.append(b)
                     stalls_list.append(
                         f'{1} , Due to Data Dependency on LW/SW for PC = {PC - 1}, clock = {my_clock - 1}')
@@ -247,6 +382,7 @@ def checkForStalls(instType, arr):
                 a.append(space)
                 a.append(no_stalls)
                 a.append(0)
+                a.append(lastpc)
                 info.append(a)
                 return [previous_registers[0][1], -1]
             else:
@@ -254,6 +390,7 @@ def checkForStalls(instType, arr):
                 a.append(space)
                 a.append(no_stalls)
                 a.append(0)
+                a.append(lastpc)
                 info.append(a)
                 data_forwarding_list.append(
                     f'MEM-WB → ID-EXE for PC = {PC - 1}, clock = {my_clock}')
@@ -264,12 +401,14 @@ def checkForStalls(instType, arr):
         a.append(space)
         a.append(no_stalls)
         a.append(0)
+        a.append(lastpc)
         info.append(a)
         return [-1, -1]
     a = []
     a.append(space)
     a.append(no_stalls)
     a.append(0)
+    a.append(lastpc)
     info.append(a)
     return [-1, -1]
 
@@ -301,7 +440,9 @@ def InstructionFetch(inst):
     global previous_registers
     global instructions_till_now
     global space
+    global lastpc
 
+    lastpc = PC
     k = str(str(PC+1)+'.0')
     l = str(str(PC+1)+'.50')
     text.tag_add("start", k, l)
@@ -1021,8 +1162,15 @@ class Table2:
                 o = o+7
         inst = inst + "\n"
         text1.insert(END, inst)
+
+        def show_info(text):
+            label.configure(text=text)
+
+        label = Label(middle)
+        label.pack(side="top", fill="x")
         for j in range(0, len(info)):
             l = 0
+            num = 0
             inst = ""
             if(j >= 0 and j <= 9):
                 inst = "I"+str(j)+"   "
@@ -1030,27 +1178,32 @@ class Table2:
                 for k in range(0, info[j][0]):
                     inst = inst+"       "
                     l = l+7
+                    num = num+1
             elif (j >= 10 and j <= 99):
                 inst = "I" + str(j) + "  "
-                l = l+3
+                l = l+4
                 for k in range(0, info[j][0]):
                     inst = inst + "       "
                     l = l+7
+                    num = num + 1
             elif (j >= 100 and j <= 999):
                 inst = "I" + str(j) + " "
-                l = l+2
+                l = l+4
                 for k in range(0, info[j][0]):
                     inst = inst + "       "
                     l = l+7
+                    num = num + 1
             if info[j][2] == 0:
                 for k in range(1, 2):
                     if k == 1:
                         inst = inst + "IF     "
                         l = l+7
+                        num = num + 1
                 m = str(str(j + 2) + "." + str(l))
                 for k in range(0, info[j][1]):
                     inst = inst + "Stall  "
                     l = l+7
+                n = str(str(j + 2) + "." + str(l))
                 for k in range(2, 6):
                     if k == 2:
                         inst = inst + "ID/RF  "
@@ -1061,10 +1214,12 @@ class Table2:
                     if k == 5:
                         inst = inst + "WB     "
             else:
+                num = num + 1
                 m = str(str(j + 2) + "." + str(l))
                 for k in range(0, info[j][1]):
                     inst = inst + "Stall  "
                     l = l + 7
+                n = str(str(j + 2) + "." + str(l))
                 for k in range(1, 6):
                     if k == 1:
                         inst = inst + "IF     "
@@ -1077,8 +1232,15 @@ class Table2:
                     if k == 5:
                         inst = inst + "WB     "
             inst = inst+"\n"
-            text1.insert(END, inst)
-            n = str(str(j + 2) + "." + str(l))
+            tag = inst
+            text = inst
+            text1.insert("end", text, (tag,))
+            temp = "INSTRUCTION NUMBER: "+str(j)+"       INSTRUCTION: "+str(
+                Instructions[info[j][3]])+"          STARTING CLOCK CYCLE:  "+str(num)
+            text1.tag_bind(tag, "<Enter>", lambda event1,
+                           temp=temp: show_info(temp))
+            text1.tag_bind(tag, "<Leave>", lambda event1,
+                           temp=temp: show_info(""))
             text1.tag_add("start", m, n)
             text1.tag_config("start", background="red")
             r = str(j+2)+".0"
