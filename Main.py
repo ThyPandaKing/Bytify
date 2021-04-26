@@ -1,4 +1,5 @@
 import InputFile as InputFile
+import math
 import memorySegment as FillMemory
 from tkinter import *
 from tkinter import font as tkFont
@@ -20,14 +21,17 @@ Instructions = []
 Data = []
 
 # variables for cache
-cache_size = 0  # bytes
-block_size = 0  # bytes
-associativity = 0
-clocks_for_l2 = 0
-clocks_for_main_mem = 0
-set_number = 0
+cache_size_1 = 0  # bytes
+cache_size_2 = 0  # bytes
+block_size_1 = 0  # bytes
+block_size_2 = 0  # bytes
+associativity_1 = 0
+associativity_2 = 0
+set_number_1 = 0
+set_number_2 = 0
 main_memory_access_time = 0
 second_cache_access_time = 0
+
 
 # variables used for pipelining
 instructions_till_now = 0
@@ -94,10 +98,23 @@ class cache_block:
 
 class cache_set:
     def __init__(self, associativity_for_this, block_siz):
+        self.block_size = block_siz
         self.set_arr = associativity_for_this*[cache_block(block_siz)]
 
 
-cache_main = set_number * [cache_set(associativity, block_size)]
+class real_cache:
+    def __init__(self, set_number, associativity, block_size):
+        self.set_number = set_number
+        self.offset_bits = math.log2(block_size)
+        self.index_bits = math.log2(set_number)
+        self.tag_bits = 32 - self.index_bits - self.block_bits
+        self.associativity = associativity
+        self.block_size = block_size
+        self.cache = set_number * [cache_set(associativity, block_size)]
+
+
+cache_main_level_1 = real_cache(set_number_1, associativity_1, block_size_1)
+cache_main_level_2 = real_cache(set_number_2, associativity_2, block_size_2)
 
 # given address , and proper bit size of 3 parameters returns all the 3 parameters
 
@@ -135,9 +152,13 @@ def address_to_values(address, offset_bits, index_bits):
     return tag, index, offset
 
 
-def set_finder(index):
-    global cache_main
-    return cache_main[index]
+def set_finder(index, level):
+    global cache_main_level_1
+    global cache_main_level_2
+    if level == 1:
+        return cache_main_level_1.cache[index]
+    else:
+        return cache_main_level_2.cache[index]
 
 
 def search_tag(tag, set_to_search: cache_set):
@@ -154,21 +175,27 @@ def find_offset(offset, block: cache_block):
     return block[offset]
 
 
-def find_from_next(address, set_to_be_replaced: cache_set, from_main_mem):
-    global block_size
+def find_from_next(address, set_to_be_replaced: cache_set, from_main_mem: bool):
+    global block_size_1
+    global block_size_2
     global my_clock
     global stalls_list
     global main_memory_access_time
+    global cache_main_level_1
+    global cache_main_level_2
     global second_cache_access_time
 
     if from_main_mem == True:
         new_block = cache_block
-        idx = block_size
-        while idx < block_size:
+        idx = 0
+        while idx < block_size_1:
             new_block.blocks.append(dataSegment[address+idx])
             idx += 1
 
-        nw_tag, nw_index, nw_offset = address_to_values(address)
+        # as value is to be added in l2 (because we are checking in main mem) we will send it's parameters
+
+        nw_tag, nw_index, nw_offset = address_to_values(
+            address, cache_main_level_2.offset_bits, cache_main_level_2.index_bits)
 
         new_block.tag = nw_tag
 
@@ -178,8 +205,30 @@ def find_from_next(address, set_to_be_replaced: cache_set, from_main_mem):
             f'{main_memory_access_time - 1} , Due to Branch Statement for PC = {PC - 1} , clock = {my_clock - main_memory_access_time}')
 
         LRU(set_to_be_replaced, new_block)
+    else:
+        is_value_in, nw_set, nw_block = search_address(
+            address, cache_main_level_2)
 
-        return dataSegment[address]
+        if is_value_in:
+            LRU(set_to_be_replaced, nw_block)
+        else:
+            find_from_next(address, nw_set, True)
+            is_value_in, nw_set, nw_block = search_address(
+                address, cache_main_level_2)
+            LRU(set_to_be_replaced, nw_block)
+
+
+# return true if address is in cache_level_2 also return the entire block , false otherwise
+
+def search_address(address, cache_to_search):
+    nw_tag, nw_index, nw_offset = address_to_values(
+        address, cache_to_search.offset_bits, cache_to_search.index_bits)
+    nw_set = set_finder(nw_index, 2)
+    nw_blk = search_tag(nw_tag, nw_set)
+    if nw_blk == False:
+        return False, nw_set, -1
+    else:
+        return True, nw_set, nw_blk
 
 
 # will first of all check whole set then find minimum in it, replace it
