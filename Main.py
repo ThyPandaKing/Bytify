@@ -232,6 +232,8 @@ def search_address(address, cache_to_search):
 
 # will first of all check whole set then find minimum in it, replace it
 def LRU(set_to_check: cache_set, new_block: cache_block):
+    global cache_main_level_1
+    global cache_main_level_2
     temp_clock=100000
     j=0
     k=0
@@ -246,8 +248,15 @@ def LRU(set_to_check: cache_set, new_block: cache_block):
 # will update the main memory (check for input parameters to take)
 
 
-def update_block_in_main_mem():
-    pass
+def update_block_in_main_mem(address,value):
+    global cache_main_level_1
+    global cache_main_level_2
+    search,set1,block1=search_address(address,cache_main_level_1)
+    if(search==True):
+        cache_main_level_1.set1.block1=value
+    search, set1, block1 = search_address(address, cache_main_level_2)
+    if (search == True):
+        cache_main_level_2.set1.block1 = value
 
 
 class stall:
@@ -980,6 +989,7 @@ def mem(instructType, reqRegisters, temp):
                     Register[reqRegisters[0]] = hex(int(dataSegment[temp//4]))
         else:
             dataSegment[temp//4] = Register[reqRegisters[0]]
+            update_block_in_main_mem(temp,Register[reqRegisters[0]])
 
         tp = previous_registers[1].copy()
         tp[3] = previous_registers[0][3]
