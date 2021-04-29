@@ -232,7 +232,16 @@ def search_address(address, cache_to_search):
 
 # will first of all check whole set then find minimum in it, replace it
 def LRU(set_to_check: cache_set, new_block: cache_block):
-    pass
+    temp_clock=100000
+    j=0
+    k=0
+    for st in set_to_search.set_arr:
+        if st.clock < temp_clock:
+            temp_clock=st.clock
+            j=k
+        k+=1
+    set_to_search.set_arr[j]=new_block
+
 
 # will update the main memory (check for input parameters to take)
 
@@ -1497,16 +1506,20 @@ def open_file():
             list = list.strip()
             if m==0:
                 cache_size_1=int(list)
+                cache_size_1=cache_size_1//4
             elif m==1:
                 block_size_1 =int(list)
+                block_size_1=block_size_1//4
             elif m==2:
                 associativity_1 =int(list)
             elif m==3:
                 second_cache_access_time =int(list)
             elif m==4:
                 cache_size_2=int(list)
+                cache_size_2 = cache_size_2 // 4
             elif m==5:
                 block_size_2=int(list)
+                block_size_2 = block_size_2 // 4
             elif m==6:
                 associativity_2=int(list)
             elif m==7:
@@ -1516,8 +1529,6 @@ def open_file():
         set_number_1=cache_size_1//l
         l = block_size_2 * associativity_2
         set_number_2 = cache_size_2 // l
-        cache_main_level_1 = real_cache(set_number_1, associativity_1, block_size_1)
-        cache_main_level_2 = real_cache(set_number_2, associativity_2, block_size_2)
 
 Label(information, text="Is data forwarding allowed?").grid(row=1, sticky=W)
 var1 = IntVar()
@@ -1543,7 +1554,15 @@ positionDown = int(information.winfo_screenheight() / 2 - windowHeight / 2)
 information.geometry("+{}+{}".format(positionRight, positionDown))
 information.mainloop()
 
+cache_main_level_1 = real_cache(set_number_1, associativity_1, block_size_1)
+cache_main_level_2 = real_cache(set_number_2, associativity_2, block_size_2)
 
+print(set_number_1)
+print(associativity_1)
+print(block_size_1)
+print(set_number_2)
+print(associativity_2)
+print(block_size_2)
 
 gui = Tk()
 gui.configure(background="light green")
