@@ -178,6 +178,7 @@ def find_from_next(address, set_to_be_replaced: cache_set, from_main_mem: bool):
     global block_size_1
     global block_size_2
     global my_clock
+    global no_stalls
     global stalls_list
     global main_memory_access_time
     global cache_main_level_1
@@ -200,6 +201,7 @@ def find_from_next(address, set_to_be_replaced: cache_set, from_main_mem: bool):
 
         my_clock += main_memory_access_time
         new_block.clock = my_clock
+        no_stalls+= main_memory_access_time
         stalls_list.append(
             f'{main_memory_access_time - 1} , Due to Branch Statement for PC = {PC - 1} , clock = {my_clock - main_memory_access_time}')
 
@@ -253,10 +255,10 @@ def update_block_in_main_mem(address,value):
     global cache_main_level_2
     search,set1,block1=search_address(address,cache_main_level_1)
     if(search==True):
-        cache_main_level_1.set1.block1=value
+        block1=value
     search, set1, block1 = search_address(address, cache_main_level_2)
     if (search == True):
-        cache_main_level_2.set1.block1 = value
+        block1= value
 
 
 class stall:
@@ -1567,12 +1569,6 @@ information.mainloop()
 cache_main_level_1 = real_cache(set_number_1, associativity_1, block_size_1)
 cache_main_level_2 = real_cache(set_number_2, associativity_2, block_size_2)
 
-print(set_number_1)
-print(associativity_1)
-print(block_size_1)
-print(set_number_2)
-print(associativity_2)
-print(block_size_2)
 
 gui = Tk()
 gui.configure(background="light green")
