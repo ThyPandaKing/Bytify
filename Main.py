@@ -189,6 +189,10 @@ def find_from_next(address, set_to_be_replaced: cache_set, from_main_mem: bool):
     global cache_main_level_1
     global cache_main_level_2
     global second_cache_access_time
+    global totalStalls
+    global space
+    global infostall
+    global lastpc
 
     if from_main_mem == True:
         # print(type(cache_block))
@@ -207,9 +211,27 @@ def find_from_next(address, set_to_be_replaced: cache_set, from_main_mem: bool):
 
         new_block.tag = nw_tag
 
-        my_clock += main_memory_access_time
+        my_clock += main_memory_access_time-1
         new_block.clock = my_clock
-        no_stalls += main_memory_access_time
+        totalStalls +=main_memory_access_time-1
+        no_stalls += main_memory_access_time-1
+        info[len(info)-1][1]=no_stalls
+        if len(infostall) == 0:
+            b = []
+            b.append(PC - 1)
+            b.append(main_memory_access_time-1)
+            b.append(lastpc)
+            infostall.append(b)
+        else:
+            if lastpc==infostall[len(infostall)-1][2]:
+                infostall[len(infostall)-1][1] +=main_memory_access_time-1
+            else:
+              b = []
+              b.append(PC - 1)
+              b.append(main_memory_access_time-1)
+              b.append(lastpc)
+              infostall.append(b)
+            space=space+main_memory_access_time-1
         stalls_list.append(
             f'{main_memory_access_time - 1} , Due to Cache Miss in Level 2 for PC = {PC - 1} , clock = {my_clock - main_memory_access_time}')
         # print('to be initiallized ', new_block.tag, nw_tag)
@@ -219,8 +241,25 @@ def find_from_next(address, set_to_be_replaced: cache_set, from_main_mem: bool):
             address, cache_main_level_2, 2)
 
         my_clock += second_cache_access_time
-
+        totalStalls =totalStalls+ second_cache_access_time
         no_stalls += second_cache_access_time
+        info[len(info) - 1][1] = no_stalls
+        space+=second_cache_access_time
+        if len(infostall) == 0:
+            b = []
+            b.append(PC - 1)
+            b.append(second_cache_access_time)
+            b.append(lastpc)
+            infostall.append(b)
+        else:
+            if lastpc==infostall[len(infostall)-1][2]:
+                infostall[len(infostall)-1][1]+=second_cache_access_time
+            else:
+                b = []
+                b.append(PC - 1)
+                b.append(second_cache_access_time)
+                b.append(lastpc)
+                infostall.append(b)
         stalls_list.append(
             f'{main_memory_access_time - 1} , Due to Cache Miss in Level 1 for PC = {PC - 1} , clock = {my_clock - main_memory_access_time}')
 
@@ -1059,12 +1098,20 @@ def mem(instructType, reqRegisters, temp):
                     Register[reqRegisters[0]] = nw_block.blocks[nw_offset]
                 else:
                     print('nhi mila vmro')
+            if (type(dataSegment[temp // 4]) == int):
+                Register[reqRegisters[0]] = hex(dataSegment[temp // 4])
+            else:
+                if dataSegment[temp // 4].find('x') != -1:
+                    Register[reqRegisters[0]] = hex(
+                        int(dataSegment[temp // 4], 16))
+                else:
+                    Register[reqRegisters[0]] = hex(int(dataSegment[temp // 4]))
 
         else:
             dataSegment[temp//4] = Register[reqRegisters[0]]
             update_block_in_main_mem(temp//4, Register[reqRegisters[0]])
 
-        # print_caches()
+        print_caches()
 
         tp = previous_registers[1].copy()
         tp[3] = previous_registers[0][3]
@@ -1732,12 +1779,15 @@ gui.grid_rowconfigure(1, weight=1)
 gui.grid_columnconfigure(0, weight=1)
 stalls = Frame(tabControl, bg='black')
 data_forwarding = Frame(tabControl, bg='light green')
+cache = Frame(tabControl, bg='light green')
 
 tabControl.add(tab1, text='        EXECUTION OF THE INSTRUCTIONS           ')
 tabControl.add(
     stalls, text='        INFORMATION ABOUT STALLS AND NUMBER OF CYCLES     ')
 tabControl.add(data_forwarding,
                text='        INFORMATION ABOUT DATA FORWARDING     ')
+tabControl.add(cache,
+               text='        CACHE     ')
 tabControl.pack(expand=1, fill="both")
 t2 = Table2(stalls)
 t3 = Table3(data_forwarding)
