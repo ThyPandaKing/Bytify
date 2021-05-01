@@ -93,14 +93,18 @@ class cache_block:
 
     def __init__(self, block_siz):
         self.clock = -1
-        self.tag = 0
-        self.blocks = block_siz*[0]
+        self.tag = -1
+        self.blocks = []
+        for i in range(block_siz):
+            self.blocks.append(0)
 
 
 class cache_set:
     def __init__(self, associativity_for_this, block_siz):
         self.block_size = block_siz
-        self.set_arr = associativity_for_this*[cache_block(block_siz)]
+        self.set_arr = []
+        for i in range(associativity_for_this):
+            self.set_arr.append(cache_block(block_siz))
 
 
 class real_cache:
@@ -111,7 +115,9 @@ class real_cache:
         self.tag_bits = 32 - self.index_bits - self.offset_bits
         self.associativity = associativity
         self.block_size = block_size
-        self.cache = set_number * [cache_set(associativity, block_size)]
+        self.cache = []
+        for i in range(set_number):
+            self.cache.append(cache_set(associativity, block_size))
 
 
 # given address , and proper bit size of 3 parameters returns all the 3 parameters
@@ -126,7 +132,7 @@ def address_to_values(address, offset_bits, index_bits):
     while ind < offset_bits:
         ind += 1
         temp.append(address % 2)
-        address /= 2
+        address //= 2
 
     ind = 1
     for i in temp:
@@ -138,7 +144,7 @@ def address_to_values(address, offset_bits, index_bits):
     while ind < index_bits:
         ind += 1
         temp.append(address % 2)
-        address /= 2
+        address //= 2
 
     ind = 1
     for i in temp:
@@ -163,7 +169,7 @@ def search_tag(tag, set_to_search: cache_set):
 
     for st in set_to_search.set_arr:
         if st.tag == tag:
-            return st.blocks
+            return st
 
     return -1
 
@@ -177,6 +183,7 @@ def find_from_next(address, set_to_be_replaced: cache_set, from_main_mem: bool):
     global block_size_1
     global block_size_2
     global my_clock
+    global no_stalls
     global stalls_list
     global main_memory_access_time
     global cache_main_level_1
@@ -184,10 +191,13 @@ def find_from_next(address, set_to_be_replaced: cache_set, from_main_mem: bool):
     global second_cache_access_time
 
     if from_main_mem == True:
-        new_block = cache_block
+        # print(type(cache_block))
+        new_block = cache_block(set_to_be_replaced.block_size)
         idx = 0
+
         while idx < block_size_1:
-            new_block.blocks.append(dataSegment[address+idx])
+            new_block.blocks[idx] = dataSegment[address+idx]
+            # print('data segment -> ', dataSegment[address + idx], address)
             idx += 1
 
         # as value is to be added in l2 (because we are checking in main mem) we will send it's parameters
@@ -199,31 +209,55 @@ def find_from_next(address, set_to_be_replaced: cache_set, from_main_mem: bool):
 
         my_clock += main_memory_access_time
         new_block.clock = my_clock
+        no_stalls += main_memory_access_time
         stalls_list.append(
-            f'{main_memory_access_time - 1} , Due to Branch Statement for PC = {PC - 1} , clock = {my_clock - main_memory_access_time}')
-
+            f'{main_memory_access_time - 1} , Due to Cache Miss in Level 2 for PC = {PC - 1} , clock = {my_clock - main_memory_access_time}')
+        # print('to be initiallized ', new_block.tag, nw_tag)
         LRU(set_to_be_replaced, new_block)
     else:
         is_value_in, nw_set, nw_block = search_address(
-            address, cache_main_level_2)
+            address, cache_main_level_2, 2)
+
+        my_clock += second_cache_access_time
+
+        no_stalls += second_cache_access_time
+        stalls_list.append(
+            f'{main_memory_access_time - 1} , Due to Cache Miss in Level 1 for PC = {PC - 1} , clock = {my_clock - main_memory_access_time}')
 
         if is_value_in:
+
+            nw_block.tag, nw_st, nw_offset = address_to_values(
+                address, cache_main_level_1.offset_bits, cache_main_level_1.index_bits)
+            nw_block.clock = my_clock
+            # print('to be initiallized ', nw_block.tag)
             LRU(set_to_be_replaced, nw_block)
         else:
             find_from_next(address, nw_set, True)
             is_value_in, nw_set, nw_block = search_address(
-                address, cache_main_level_2)
+                address, cache_main_level_2, 2)
+            nw_block.tag, nw_st, nw_offset = address_to_values(
+                address, cache_main_level_1.offset_bits, cache_main_level_1.index_bits)
+            # print('to be initiallized ', nw_block.tag)
+            nw_block.clock = my_clock
             LRU(set_to_be_replaced, nw_block)
 
 
 # return true if address is in cache_level_2 also return the entire block , false otherwise
 
-def search_address(address, cache_to_search):
+def search_address(address, cache_to_search, level):
     nw_tag, nw_index, nw_offset = address_to_values(
         address, cache_to_search.offset_bits, cache_to_search.index_bits)
-    nw_set = set_finder(nw_index, 2)
+    # print(nw_tag, nw_index,  nw_offset)
+    nw_set = set_finder(nw_index, level)
+
+    # for k in nw_set.set_arr:
+    #     print('set -> ', k.blocks, k.tag)
     nw_blk = search_tag(nw_tag, nw_set)
-    if nw_blk == False:
+
+    # if type(nw_blk) == cache_block:
+    #     print(nw_blk.blocks, nw_blk.tag)
+
+    if nw_blk == -1:
         return False, nw_set, -1
     else:
         return True, nw_set, nw_blk
@@ -231,22 +265,39 @@ def search_address(address, cache_to_search):
 
 # will first of all check whole set then find minimum in it, replace it
 def LRU(set_to_check: cache_set, new_block: cache_block):
+    global cache_main_level_1
+    global cache_main_level_2
     temp_clock = 100000
     j = 0
     k = 0
     for st in set_to_check.set_arr:
+
         if st.clock < temp_clock:
             temp_clock = st.clock
             j = k
         k += 1
+
     set_to_check.set_arr[j] = new_block
+    # print("val ", new_block.blocks, new_block.tag)
+    # print("in new set index ",
+    #       set_to_check.set_arr[j].blocks, set_to_check.set_arr[j].tag)
+
+    # set_to_check.set_arr[j].tag = nw_tg
+    # set_to_check.set_arr[j].clock = my_clock
 
 
 # will update the main memory (check for input parameters to take)
 
 
-def update_block_in_main_mem():
-    pass
+def update_block_in_main_mem(address, value):
+    global cache_main_level_1
+    global cache_main_level_2
+    search, set1, block1 = search_address(address, cache_main_level_1, 1)
+    if(search == True):
+        block1 = value
+    search, set1, block1 = search_address(address, cache_main_level_2, 2)
+    if (search == True):
+        block1 = value
 
 
 class stall:
@@ -964,25 +1015,60 @@ def execution(instruct, reqRegisters, dtaFor):
     return mem(instruct, reqRegisters, temp)
 
 
-def mem(instructType, reqRegisters, temp):
+def print_caches():
+    global cache_main_level_1
+    global cache_main_level_2
 
+    print('level 1 cache -> ')
+    for k in cache_main_level_1.cache:
+        for e in k.set_arr:
+            for b in e.blocks:
+                print(b, end=" ")
+            print()
+    print('level 2 cache -> ')
+    for k in cache_main_level_2.cache:
+        for e in k.set_arr:
+            for b in e.blocks:
+                print(b, end=" ")
+            print()
+
+
+def mem(instructType, reqRegisters, temp):
+    # print(set_number_1, set_number_2)
     global PC
     if(len(reqRegisters) == 4):
         if(reqRegisters[3] == "lw"):
-            if(type(dataSegment[temp//4]) == int):
-                Register[reqRegisters[0]] = hex(dataSegment[temp//4])
+            is_value_in, nw_set, nw_block = search_address(
+                temp//4, cache_main_level_1, 1)
+            if is_value_in == True:
+                print('from first as value is in cache')
+                # print(is_value_in, nw_set.set_arr, nw_block.blocks)
+                nw_tag, nw_index, nw_offset = address_to_values(
+                    temp//4, cache_main_level_1.offset_bits, cache_main_level_1.index_bits)
+                Register[reqRegisters[0]] = nw_block.blocks[nw_offset]
+                # print(nw_tag, nw_index, nw_offset)
             else:
-                if dataSegment[temp//4].find('x') != -1:
-                    Register[reqRegisters[0]] = hex(
-                        int(dataSegment[temp//4], 16))
+                print('in second')
+                find_from_next(temp//4, nw_set, False)
+                nw_tag, nw_index, nw_offset = address_to_values(
+                    temp//4, cache_main_level_1.offset_bits, cache_main_level_1.index_bits)
+                print(nw_tag, nw_index, nw_offset)
+                is_value_in, nw_set, nw_block = search_address(
+                    temp//4, cache_main_level_1, 1)
+                if nw_block != -1:
+                    Register[reqRegisters[0]] = nw_block.blocks[nw_offset]
                 else:
-                    Register[reqRegisters[0]] = hex(int(dataSegment[temp//4]))
+                    print('nhi mila vmro')
+
         else:
             dataSegment[temp//4] = Register[reqRegisters[0]]
+            update_block_in_main_mem(temp//4, Register[reqRegisters[0]])
+
+        # print_caches()
 
         tp = previous_registers[1].copy()
         tp[3] = previous_registers[0][3]
-
+        print(stalls_list)
         previous_registers[1] = tp
         previous_registers[0][3] = int(Register[reqRegisters[0]], 16)
 
@@ -1581,12 +1667,6 @@ information.mainloop()
 cache_main_level_1 = real_cache(set_number_1, associativity_1, block_size_1)
 cache_main_level_2 = real_cache(set_number_2, associativity_2, block_size_2)
 
-print(set_number_1)
-print(associativity_1)
-print(block_size_1)
-print(set_number_2)
-print(associativity_2)
-print(block_size_2)
 
 gui = Tk()
 gui.configure(background="light green")

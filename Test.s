@@ -1,33 +1,20 @@
 .data
 
-.word 1,11,3
+.word 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20
 
 .text
 
 .globl main
 main:
-    lw $t0 , 0($s0)
-    lw $s0 , 0($s0)
-BOI:
-    # li      $v1, 0
-    beq     $t1, $s0 , finish
-
-    addi	$t0, $t0, -1		# $t0 = $t1 + 0
-    bne		$t0, $zero, BOI	    # if $t0 == $t1 then target
-
-addi	$t0, $t0, 1			# $t0 = $t1 + 0
-move    $t1 , $t0 
-addi	$t1, $t1, 1			# $t1 = $t1 1 0
-
-slt     $t2 , $t0 , $t1
-li      $t1, 1
-beq		$t2, $t1, BOI	# if $t2 == $t1 then target
-
-finish:
-    li  $v0 , 1
-    move $a0 , $t1
-    syscall
-
+    lw $t0 , 4($s0)
+    lw $s1 , 4($s0)
+    lw $s2 , 0($s0)
+    lw $t0 , 4($s0)
+    lw $s1 , 8($s0)
+    lw $s2 , 8($s0)
+    lw $s1 , 4($s0)
+    lw $s2 , 20($s0)
+    
 
     
     
