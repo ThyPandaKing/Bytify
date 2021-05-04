@@ -18,6 +18,7 @@ no_stalls = 0
 totalStalls = 0
 info = []
 infostall = []
+infostall1=[]
 Instructions = []
 Data = []
 
@@ -32,6 +33,7 @@ set_number_1 = 0
 set_number_2 = 0
 main_memory_access_time = 0
 second_cache_access_time = 0
+#stalls=10000*[10000*[0]]
 
 
 # variables used for pipelining
@@ -193,6 +195,7 @@ def find_from_next(address, set_to_be_replaced: cache_set, from_main_mem: bool):
     global space
     global infostall
     global lastpc
+    global info
 
     if from_main_mem == True:
         # print(type(cache_block))
@@ -215,12 +218,12 @@ def find_from_next(address, set_to_be_replaced: cache_set, from_main_mem: bool):
         new_block.clock = my_clock
         totalStalls +=main_memory_access_time-1
         no_stalls += main_memory_access_time-1
-        info[len(info)-1][1]=no_stalls
         if len(infostall) == 0:
             b = []
             b.append(PC - 1)
-            b.append(main_memory_access_time-1)
+            b.append(0)
             b.append(lastpc)
+            b.append(main_memory_access_time - 1)
             infostall.append(b)
         else:
             if lastpc==infostall[len(infostall)-1][2]:
@@ -231,7 +234,7 @@ def find_from_next(address, set_to_be_replaced: cache_set, from_main_mem: bool):
               b.append(main_memory_access_time-1)
               b.append(lastpc)
               infostall.append(b)
-            space=space+main_memory_access_time-1
+        info[len(info)-1][4]+=main_memory_access_time - 1
         stalls_list.append(
             f'{main_memory_access_time - 1} , Due to Cache Miss in Level 2 for PC = {PC - 1} , clock = {my_clock - main_memory_access_time}')
         # print('to be initiallized ', new_block.tag, nw_tag)
@@ -240,26 +243,27 @@ def find_from_next(address, set_to_be_replaced: cache_set, from_main_mem: bool):
         is_value_in, nw_set, nw_block = search_address(
             address, cache_main_level_2, 2)
 
-        my_clock += second_cache_access_time
-        totalStalls =totalStalls+ second_cache_access_time
-        no_stalls += second_cache_access_time
-        info[len(info) - 1][1] = no_stalls
-        space+=second_cache_access_time
+        my_clock += main_memory_access_time - 1
+        totalStalls =totalStalls+ main_memory_access_time - 1
+        no_stalls += main_memory_access_time - 1
         if len(infostall) == 0:
             b = []
             b.append(PC - 1)
-            b.append(second_cache_access_time)
+            b.append(main_memory_access_time - 1)
             b.append(lastpc)
+            b.append(0)
             infostall.append(b)
         else:
             if lastpc==infostall[len(infostall)-1][2]:
-                infostall[len(infostall)-1][1]+=second_cache_access_time
+                infostall[len(infostall)-1][1]+=main_memory_access_time - 1
             else:
                 b = []
                 b.append(PC - 1)
-                b.append(second_cache_access_time)
+                b.append(main_memory_access_time - 1)
                 b.append(lastpc)
+                b.append(0)
                 infostall.append(b)
+        info[len(info) - 1][4] += main_memory_access_time - 1
         stalls_list.append(
             f'{main_memory_access_time - 1} , Due to Cache Miss in Level 1 for PC = {PC - 1} , clock = {my_clock - main_memory_access_time}')
 
@@ -388,6 +392,7 @@ def checkForStalls(instType, arr):
         a.append(no_stalls)
         a.append(0)
         a.append(lastpc)
+        a.append(0)
         info.append(a)
         return[-1, -1]
     st = 1
@@ -404,12 +409,14 @@ def checkForStalls(instType, arr):
                 a.append(no_stalls)
                 a.append(0)
                 a.append(lastpc)
+                a.append(0)
                 info.append(a)
                 space = space + 3
                 b = []
                 b.append(PC-1)
                 b.append(3)
                 b.append(lastpc)
+                b.append(0)
                 infostall.append(b)
                 stalls_list.append(
                     f'{3} , Due to Branch Statement for PC = {PC - 1} , clock = {my_clock - 4}')
@@ -422,12 +429,14 @@ def checkForStalls(instType, arr):
             a.append(no_stalls)
             a.append(1)
             a.append(lastpc)
+            a.append(0)
             info.append(a)
             space = space+1
             b = []
             b.append(PC - 1)
             b.append(1)
             b.append(lastpc)
+            b.append(0)
             infostall.append(b)
             stalls_list.append(
                 f'{1} , Due to Wrong Branch Prediction for PC = {PC - 1} , clock = {my_clock - 1}')
@@ -439,6 +448,7 @@ def checkForStalls(instType, arr):
         a.append(no_stalls)
         a.append(0)
         a.append(lastpc)
+        a.append(0)
         info.append(a)
         return [-1, -1]
 
@@ -456,12 +466,14 @@ def checkForStalls(instType, arr):
             a.append(no_stalls)
             a.append(0)
             a.append(lastpc)
+            a.append(0)
             info.append(a)
             space = space + 3
             b = []
             b.append(PC - 1)
             b.append(3)
             b.append(lastpc)
+            b.append(0)
             infostall.append(b)
             stalls_list.append(
                 f'{3} , Due to Data Dependency for PC = {PC - 1} , clock = {my_clock - 4}')
@@ -483,12 +495,14 @@ def checkForStalls(instType, arr):
                         a.append(no_stalls)
                         a.append(0)
                         a.append(lastpc)
+                        a.append(0)
                         info.append(a)
                         space = space + 1
                         b = []
                         b.append(PC - 1)
                         b.append(1)
                         b.append(lastpc)
+                        b.append(0)
                         infostall.append(b)
                         stalls_list.append(
                             f'{1} , Due to Data Dependency on LW/SW for PC = {PC - 1}, clock = {my_clock - 1}')
@@ -499,6 +513,7 @@ def checkForStalls(instType, arr):
                     a.append(no_stalls)
                     a.append(0)
                     a.append(lastpc)
+                    a.append(0)
                     info.append(a)
                     return [previous_registers[0][1], previous_registers[1][1]]
                 if 'lw' in previous_registers[1][0]:
@@ -510,12 +525,14 @@ def checkForStalls(instType, arr):
                     a.append(no_stalls)
                     a.append(0)
                     a.append(lastpc)
+                    a.append(0)
                     info.append(a)
                     space = space + 1
                     b = []
                     b.append(PC - 1)
                     b.append(1)
                     b.append(lastpc)
+                    b.append(0)
                     infostall.append(b)
                     stalls_list.append(
                         f'{1} , Due to Data Dependency on LW/SW for PC = {PC - 1}, clock = {my_clock - 1}')
@@ -529,6 +546,7 @@ def checkForStalls(instType, arr):
                 a.append(no_stalls)
                 a.append(0)
                 a.append(lastpc)
+                a.append(0)
                 info.append(a)
                 return [previous_registers[0][1], -1]
             else:
@@ -537,6 +555,7 @@ def checkForStalls(instType, arr):
                 a.append(no_stalls)
                 a.append(0)
                 a.append(lastpc)
+                a.append(0)
                 info.append(a)
                 data_forwarding_list.append(
                     f'MEM-WB → ID-EXE for PC = {PC - 1}, clock = {my_clock}')
@@ -548,6 +567,7 @@ def checkForStalls(instType, arr):
         a.append(no_stalls)
         a.append(0)
         a.append(lastpc)
+        a.append(0)
         info.append(a)
         return [-1, -1]
     a = []
@@ -555,6 +575,7 @@ def checkForStalls(instType, arr):
     a.append(no_stalls)
     a.append(0)
     a.append(lastpc)
+    a.append(0)
     info.append(a)
     return [-1, -1]
 
@@ -1111,8 +1132,6 @@ def mem(instructType, reqRegisters, temp):
             dataSegment[temp//4] = Register[reqRegisters[0]]
             update_block_in_main_mem(temp//4, Register[reqRegisters[0]])
 
-        print_caches()
-
         tp = previous_registers[1].copy()
         tp[3] = previous_registers[0][3]
         print(stalls_list)
@@ -1303,7 +1322,9 @@ class Table1:
 
 class Table2:
     def __init__(self, root):
-        global info
+        global totalStalls
+        global infostall
+        global infostall1
         if my_clock == 0:
             cycle = "The number of cycles taken are: " + str(my_clock)
             ipc = "Instructions per cycle(IPC): 0"
@@ -1331,7 +1352,6 @@ class Table2:
         text1 = Text(middle, width=180, height=35, wrap=NONE,
                      xscrollcommand=h1.set,
                      yscrollcommand=v1.set)
-
         inst = "     "
         if my_clock == 0:
             text1.pack(side=TOP)
@@ -1359,70 +1379,253 @@ class Table2:
         label.pack(side="top", fill="x")
         for j in range(0, len(info)):
             l = 0
+            m1 = str(str(j + 2) + "." + str(l))
+            l1 = str(str(j + 2) + "." + str(l))
+            m2 = str(str(j + 2) + "." + str(l))
+            l2 = str(str(j + 2) + "." + str(l))
+            m3 = str(str(j + 2) + "." + str(l))
+            l3 = str(str(j + 2) + "." + str(l))
+            m4 = str(str(j + 2) + "." + str(l))
+            l4 = str(str(j + 2) + "." + str(l))
+            m5 = str(str(j + 2) + "." + str(l))
+            l5 = str(str(j + 2) + "." + str(l))
+            m6 = str(str(j + 2) + "." + str(l))
+            l6 = str(str(j + 2) + "." + str(l))
+            m7 = str(str(j + 2) + "." + str(l))
+            l7 = str(str(j + 2) + "." + str(l))
+            m8 = str(str(j + 2) + "." + str(l))
+            l8 = str(str(j + 2) + "." + str(l))
+            m9 = str(str(j + 2) + "." + str(l))
+            l9 = str(str(j + 2) + "." + str(l))
+            m10 = str(str(j + 2) + "." + str(l))
+            l10 = str(str(j + 2) + "." + str(l))
+            m11 = str(str(j + 2) + "." + str(l))
+            l11 = str(str(j + 2) + "." + str(l))
+            m12 = str(str(j + 2) + "." + str(l))
+            l12 = str(str(j + 2) + "." + str(l))
+            m13 = str(str(j + 2) + "." + str(l))
+            l13 = str(str(j + 2) + "." + str(l))
             num = 0
+            om=0
             inst = ""
             if(j >= 0 and j <= 9):
                 inst = "I"+str(j)+"   "
                 l = l+4
-                for k in range(0, info[j][0]):
-                    inst = inst+"       "
-                    l = l+7
-                    num = num+1
             elif (j >= 10 and j <= 99):
                 inst = "I" + str(j) + "  "
                 l = l+4
-                for k in range(0, info[j][0]):
-                    inst = inst + "       "
-                    l = l+7
-                    num = num + 1
             elif (j >= 100 and j <= 999):
                 inst = "I" + str(j) + " "
                 l = l+4
-                for k in range(0, info[j][0]):
-                    inst = inst + "       "
-                    l = l+7
-                    num = num + 1
-            if info[j][2] == 0:
-                for k in range(1, 2):
-                    if k == 1:
-                        inst = inst + "IF     "
+            if j>=3:
+                if info[j-3][4]!=0:
+                  for k in range(0, info[j][0]-info[j-3][4]):
+                      inst = inst + "       "
+                      l = l + 7
+                      num = num + 1
+                  m1 = str(str(j + 2) + "." + str(l))
+                  for k in range(0, info[j - 3][4]):
+                      inst = inst + "Stall  "
+                      l = l + 7
+                      totalStalls+=1
+                      om=om+1
+                  l1= str(str(j + 2) + "." + str(l))
+                else:
+                    for k in range(0, info[j][0]):
+                        inst = inst + "       "
+                        l = l + 7
+                        num = num + 1
+            else:
+                for k in range(0,info[j][0]):
+                        inst = inst + "       "
                         l = l+7
                         num = num + 1
-                m = str(str(j + 2) + "." + str(l))
-                for k in range(0, info[j][1]):
-                    inst = inst + "Stall  "
-                    l = l+7
+            if info[j][2] == 0:
+                if j>=1:
+                    if info[j-1][1]!=0:
+                        if j >= 2:
+                            if info[j - 2][4] != 0:
+                                m2 = str(str(j + 2) + "." + str(l))
+                                for mm in range(0, info[j - 2][4]):
+                                    inst = inst + "Stall  "
+                                    totalStalls += 1
+                                    om=om+1
+                                    l = l + 7
+                                l2 = str(str(j + 2) + "." + str(l))
+                                for oo in range(j + 1, len(info)):
+                                    info[oo][0] += info[j - 2][4]
+                                for k in range(1, 2):
+                                    if k == 1:
+                                        inst = inst + "IF     "
+                                        l = l+7
+                                        num = num + 1
+                                m3 = str(str(j + 2) + "." + str(l))
+                                for k in range(0, info[j][1]):
+                                    inst = inst + "Stall  "
+                                    l = l + 7
+                                l3 = str(str(j + 2) + "." + str(l))
+                            else:
+                                for k in range(1, 2):
+                                    if k == 1:
+                                        inst = inst + "IF     "
+                                        l = l + 7
+                                        num = num + 1
+                                m4 = str(str(j + 2) + "." + str(l))
+                                if j >= 2:
+                                    if info[j - 2][4] != 0:
+                                        for mm in range(0, info[j - 2][4]):
+                                            inst = inst + "Stall  "
+                                            totalStalls += 1
+                                            om=om+1
+                                            l=l+7
+                                        for oo in range(j + 1, len(info)):
+                                            info[oo][0] += info[j - 2][4]
+                                for k in range(0, info[j][1]):
+                                    inst = inst + "Stall  "
+                                    l = l + 7
+                                l4 = str(str(j + 2) + "." + str(l))
+                    else:
+                        for k in range(1, 2):
+                            if k == 1:
+                                inst = inst + "IF     "
+                                l = l + 7
+                                num = num + 1
+                        m5 = str(str(j + 2) + "." + str(l))
+                        if j >= 2:
+                            if info[j - 2][4] != 0:
+                                for mm in range(0, info[j - 2][4]):
+                                    inst = inst + "Stall  "
+                                    l=l+7
+                                    totalStalls += 1
+                                    om=om+1
+                                for oo in range(j + 1, len(info)):
+                                    info[oo][0] += info[j - 2][4]
+                        for k in range(0, info[j][1]):
+                            inst = inst + "Stall  "
+                            l = l + 7
+                        l5 = str(str(j + 2) + "." + str(l))
+                #"""
+                else:
+                    for k in range(1, 2):
+                        if k == 1:
+                            inst = inst + "IF     "
+                            l = l+7
+                            num = num + 1
+                    m6 = str(str(j + 2) + "." + str(l))
+                    if j>=2:
+                        if info[j - 2][4] != 0 :
+                            for mm in range(0, info[j - 2][4]):
+                                inst = inst + "Stall  "
+                                totalStalls += 1
+                                l=l+7
+                                om=om+1
+                            for oo in range(j+1,len(info)):
+                                info[oo][0]+=info[j - 2][4]
+                    for k in range(0, info[j][1]):
+                        inst = inst + "Stall  "
+                        l = l+7
+                    l6 = str(str(j + 2) + "." + str(l))
+                #"""
                 n = str(str(j + 2) + "." + str(l))
                 for k in range(2, 6):
+                    if info[j][1]!=0 and k==2 and j>=1:
+                        m7 = str(str(j + 2) + "." + str(l))
+                        for mm in range(0, info[j-1][4]):
+                            inst = inst +"Stall  "
+                            totalStalls += 1
+                            om=om+1
+                            l=l+7
+                        l7 = str(str(j + 2) + "." + str(l))
                     if k == 2:
                         inst = inst + "ID/RF  "
+                        l=l+7
                     if k == 3:
                         inst = inst + "EXE    "
+                        l=l+7
                     if k == 4:
                         inst = inst + "MEM    "
+                        l=l+7
                     if k == 5:
                         inst = inst + "WB     "
+                        l=l+7
+                    if k==3:
+                        m8 = str(str(j + 2) + "." + str(l))
+                        for mm in range(0, info[j][4]):
+                            inst = inst +"Stall  "
+                            l=l+7
+                        l8 = str(str(j + 2) + "." + str(l))
+                    if j>=1:
+                        if info[j-1][4]!=0 and k==2 and info[j][1]==0:
+                            m9 = str(str(j + 2) + "." + str(l))
+                            for mm in range(0, info[j-1][4]):
+                                inst = inst +"Stall  "
+                                totalStalls += 1
+                                om=om+1
+                                l=l+7
+                            l9 = str(str(j + 2) + "." + str(l))
+
             else:
                 num = num + 1
-                m = str(str(j + 2) + "." + str(l))
+                m10 = str(str(j + 2) + "." + str(l))
                 for k in range(0, info[j][1]):
                     inst = inst + "Stall  "
                     l = l + 7
+                l10 = str(str(j + 2) + "." + str(l))
                 n = str(str(j + 2) + "." + str(l))
                 for k in range(1, 6):
                     if k == 1:
                         inst = inst + "IF     "
+                        l=l+7
                     if k == 2:
                         inst = inst + "ID/RF  "
+                        l=l+7
                     if k == 3:
                         inst = inst + "EXE    "
+                        l=l+7
                     if k == 4:
                         inst = inst + "MEM    "
+                        l=l+7
                     if k == 5:
                         inst = inst + "WB     "
+                        l=l+7
+                    if k==3:
+                        m11 = str(str(j + 2) + "." + str(l))
+                        for mm in range(0, info[j][4]):
+                            inst = inst + "Stall  "
+                            l=l+7
+                        l11 = str(str(j + 2) + "." + str(l))
+                    if j>=1:
+                        m12 = str(str(j + 2) + "." + str(l))
+                        if info[j-1][4]!=0 and k==2:
+                            for mm in range(0, info[j-1][4]):
+                                inst = inst +"Stall  "
+                                totalStalls += 1
+                                om=om+1
+                                l=l+7
+                        l12 = str(str(j + 2) + "." + str(l))
+                    if j>=2:
+                        if info[j-2][4]!=0 and k==1:
+                            m13 = str(str(j + 2) + "." + str(l))
+                            for mm in range(0, info[j-2][4]):
+                                inst = inst +"Stall  "
+                                totalStalls += 1
+                                om=om+1
+                                l=l+7
+                            l13 = str(str(j + 2) + "." + str(l))
             inst = inst+"\n"
             tag = inst
             text = inst
+            flag=0
+            for k in range (0,len(infostall)):
+                if infostall[k][0]==j:
+                    infostall[k][1]+=om
+                    flag=1
+                    break
+            if flag==0 and om!=0:
+                b = []
+                b.append(info[j][3])
+                b.append(om)
+                infostall1.append(b)
             text1.insert("end", text, (tag,))
             temp = "INSTRUCTION NUMBER: "+str(j)+"       INSTRUCTION: "+str(
                 Instructions[info[j][3]])+"          STARTING CLOCK CYCLE:  "+str(num)
@@ -1430,7 +1633,19 @@ class Table2:
                            temp=temp: show_info(temp))
             text1.tag_bind(tag, "<Leave>", lambda event1,
                            temp=temp: show_info(""))
-            text1.tag_add("start", m, n)
+            text1.tag_add("start", m1, l1)
+            text1.tag_add("start", m2, l2)
+            text1.tag_add("start", m3, l3)
+            text1.tag_add("start", m4, l4)
+            text1.tag_add("start", m5, l5)
+            text1.tag_add("start", m6, l6)
+            text1.tag_add("start", m7, l7)
+            text1.tag_add("start", m8, l8)
+            text1.tag_add("start", m9, l9)
+            text1.tag_add("start", m10, l10)
+            text1.tag_add("start", m11, l11)
+            text1.tag_add("start", m12, l12)
+            text1.tag_add("start", m13, l13)
             text1.tag_config("start", background="red")
             r = str(j+2)+".0"
             s = str(j+2)+".4"
@@ -1443,7 +1658,10 @@ class Table2:
         text1.pack(side=TOP)
         h1.config(command=text1.xview)
         v1.config(command=text1.yview)
-
+        stall = "The number of stalls are: " + str(totalStalls)
+        stalls1 = Label(root, text=stall, width=80, fg='black',
+                        bg='pink', padx='10', pady='10', font=boldFont)
+        stalls1.grid(row=2, column=0)
 
 class Table3:
     def __init__(self, root):
@@ -1469,6 +1687,12 @@ class Table3:
             inst = str(j + 1) + "     "
             inst = inst + str(infostall[j][1])+" stall(s) - " + \
                 str(Instructions[infostall[j][0]])
+            inst = inst + "\n"
+            text3.insert(END, inst)
+        for j in range(0, len(infostall1)):
+            inst = str(j + 1) + "     "
+            inst = inst + str(infostall1[j][1])+" stall(s) - " + \
+                str(Instructions[infostall1[j][0]])
             inst = inst + "\n"
             text3.insert(END, inst)
         text3.pack(side=TOP)
@@ -1507,7 +1731,6 @@ class Table3:
         h2.config(command=text2.xview)
         v2.config(command=text2.yview)
 
-
 def press(num):
     global PC
     global my_clock
@@ -1524,6 +1747,10 @@ def press(num):
     global stalls_list
     global infostall
     global previous_registers
+    global cache_main_level_1
+    global cache_main_level_2
+    global infostall1
+
     j = num
     if num == '1' and PC < len(Instructions):
         while 1:
@@ -1596,6 +1823,7 @@ def press(num):
         data_forwarding_list = []
         stalls_list = []
         infostall = []
+        infostall1 = []
         previous_registers = 2 * [4 * [0]]
         space = -1
         my_clock = 0
@@ -1613,6 +1841,8 @@ def press(num):
         t1 = Table1(ctr_right2)
         t2 = Table2(stalls)
         t3 = Table3(data_forwarding)
+        cache_main_level_1 = real_cache(set_number_1, associativity_1, block_size_1)
+        cache_main_level_2 = real_cache(set_number_2, associativity_2, block_size_2)
         gui.mainloop()
 
 
@@ -1748,6 +1978,10 @@ def NewFile():
     global dataSegment1
     global dataSegment
     global MemAddres
+    global cache_main_level_1
+    global cache_main_level_2
+    cache_main_level_1 = real_cache(set_number_1, associativity_1, block_size_1)
+    cache_main_level_2 = real_cache(set_number_2, associativity_2, block_size_2)
     dataSegment = 1024 * [0]
     name = askopenfilename()
     Instructions, Data = InputFile.InputFile(name)
@@ -1866,7 +2100,8 @@ def submit():
     global stalls_list
     global infostall
     global previous_registers
-
+    global cache_main_level_1
+    global cache_main_level_2
     name = name_var.get()
     value1 = value.get()
     pcvalue = pc_var.get()
@@ -1922,6 +2157,8 @@ def submit():
     t1 = Table1(ctr_right2)
     t2 = Table2(stalls)
     t3 = Table3(data_forwarding)
+    cache_main_level_1 = real_cache(set_number_1, associativity_1, block_size_1)
+    cache_main_level_2 = real_cache(set_number_2, associativity_2, block_size_2)
     gui.mainloop()
 
 
