@@ -1,22 +1,17 @@
-### 2d list
+# 2d list with classes
+
+if this is the case
 
 10001011010011001010111100101 0 10 ->
 
-| set1 | set2 |
-| clock1 |clock2 | clock1 | clock2 |
-| tag1 | tag2 | tag3 | tag4 |
-| value1 |value2 | value3 | value4 |
-| value1 |value2 | value3 | value4 |
-| value1 |value2 | value3 | value4 |
-| value1 |value2 | value3 | value4 |
-
-| set1 | set2 |
-| clock1 |clock2 | clock1 | clock2 |
-| tag1 | tag2 | tag3 | tag4 |
-| value1 |value2 | value3 | value4 |
-| value1 |value2 | value3 | value4 |
-| value1 |value2 | value3 | value4 |
-| value1 |value2 | value3 | value4 |
+| set1            | set2            |
+| --------------- | --------------- |
+| clock1 : clock2 | clock1 : clock2 |
+| tag1 : tag2     | tag3 : tag4     |
+| value1 : value2 | value3 : value4 |
+| value1 : value2 | value3 : value4 |
+| value1 : value2 | value3 : value4 |
+| value1 : value2 | value3 : value4 |
 
 offset = log(blocks)
 index = log(set_number)
