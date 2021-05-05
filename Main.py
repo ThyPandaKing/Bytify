@@ -18,7 +18,7 @@ no_stalls = 0
 totalStalls = 0
 info = []
 infostall = []
-infostall1=[]
+infostall1 = []
 Instructions = []
 Data = []
 
@@ -33,7 +33,11 @@ set_number_1 = 0
 set_number_2 = 0
 main_memory_access_time = 0
 second_cache_access_time = 0
-#stalls=10000*[10000*[0]]
+number_of_hits_in_l1 = 0
+number_of_hits_in_l2 = 0
+total_access = 0
+
+# stalls=10000*[10000*[0]]
 
 
 # variables used for pipelining
@@ -196,6 +200,7 @@ def find_from_next(address, set_to_be_replaced: cache_set, from_main_mem: bool):
     global infostall
     global lastpc
     global info
+    global number_of_hits_in_l2
 
     if from_main_mem == True:
         # print(type(cache_block))
@@ -216,7 +221,7 @@ def find_from_next(address, set_to_be_replaced: cache_set, from_main_mem: bool):
 
         my_clock += main_memory_access_time-1
         new_block.clock = my_clock
-        totalStalls +=main_memory_access_time-1
+        totalStalls += main_memory_access_time-1
         no_stalls += main_memory_access_time-1
         if len(infostall) == 0:
             b = []
@@ -226,15 +231,15 @@ def find_from_next(address, set_to_be_replaced: cache_set, from_main_mem: bool):
             b.append(main_memory_access_time - 1)
             infostall.append(b)
         else:
-            if lastpc==infostall[len(infostall)-1][2]:
-                infostall[len(infostall)-1][1] +=main_memory_access_time-1
+            if lastpc == infostall[len(infostall)-1][2]:
+                infostall[len(infostall)-1][1] += main_memory_access_time-1
             else:
-              b = []
-              b.append(PC - 1)
-              b.append(main_memory_access_time-1)
-              b.append(lastpc)
-              infostall.append(b)
-        info[len(info)-1][4]+=main_memory_access_time - 1
+                b = []
+                b.append(PC - 1)
+                b.append(main_memory_access_time-1)
+                b.append(lastpc)
+                infostall.append(b)
+        info[len(info)-1][4] += main_memory_access_time - 1
         stalls_list.append(
             f'{main_memory_access_time - 1} , Due to Cache Miss in Level 2 for PC = {PC - 1} , clock = {my_clock - main_memory_access_time}')
         # print('to be initiallized ', new_block.tag, nw_tag)
@@ -244,7 +249,7 @@ def find_from_next(address, set_to_be_replaced: cache_set, from_main_mem: bool):
             address, cache_main_level_2, 2)
 
         my_clock += main_memory_access_time - 1
-        totalStalls =totalStalls+ main_memory_access_time - 1
+        totalStalls = totalStalls + main_memory_access_time - 1
         no_stalls += main_memory_access_time - 1
         if len(infostall) == 0:
             b = []
@@ -254,8 +259,8 @@ def find_from_next(address, set_to_be_replaced: cache_set, from_main_mem: bool):
             b.append(0)
             infostall.append(b)
         else:
-            if lastpc==infostall[len(infostall)-1][2]:
-                infostall[len(infostall)-1][1]+=main_memory_access_time - 1
+            if lastpc == infostall[len(infostall)-1][2]:
+                infostall[len(infostall)-1][1] += main_memory_access_time - 1
             else:
                 b = []
                 b.append(PC - 1)
@@ -268,6 +273,8 @@ def find_from_next(address, set_to_be_replaced: cache_set, from_main_mem: bool):
             f'{main_memory_access_time - 1} , Due to Cache Miss in Level 1 for PC = {PC - 1} , clock = {my_clock - main_memory_access_time}')
 
         if is_value_in:
+            # hit in l2
+            number_of_hits_in_l2 += 1
 
             nw_block.tag, nw_st, nw_offset = address_to_values(
                 address, cache_main_level_1.offset_bits, cache_main_level_1.index_bits)
@@ -1096,29 +1103,40 @@ def print_caches():
 def mem(instructType, reqRegisters, temp):
     # print(set_number_1, set_number_2)
     global PC
+    global total_access
+    global number_of_hits_in_l1
+
     if(len(reqRegisters) == 4):
+
         if(reqRegisters[3] == "lw"):
+            # total access increased
+            total_access += 1
+
             is_value_in, nw_set, nw_block = search_address(
                 temp//4, cache_main_level_1, 1)
             if is_value_in == True:
-                print('from first as value is in cache')
+                # hit in l1
+
+                number_of_hits_in_l1 += 1
+
+                # print('from first as value is in cache')
                 # print(is_value_in, nw_set.set_arr, nw_block.blocks)
                 nw_tag, nw_index, nw_offset = address_to_values(
                     temp//4, cache_main_level_1.offset_bits, cache_main_level_1.index_bits)
                 Register[reqRegisters[0]] = nw_block.blocks[nw_offset]
                 # print(nw_tag, nw_index, nw_offset)
             else:
-                print('in second')
+                # print('in second')
                 find_from_next(temp//4, nw_set, False)
                 nw_tag, nw_index, nw_offset = address_to_values(
                     temp//4, cache_main_level_1.offset_bits, cache_main_level_1.index_bits)
-                print(nw_tag, nw_index, nw_offset)
+
+                # print(nw_tag, nw_index, nw_offset)
+
                 is_value_in, nw_set, nw_block = search_address(
                     temp//4, cache_main_level_1, 1)
                 if nw_block != -1:
                     Register[reqRegisters[0]] = nw_block.blocks[nw_offset]
-                else:
-                    print('nhi mila vmro')
             if (type(dataSegment[temp // 4]) == int):
                 Register[reqRegisters[0]] = hex(dataSegment[temp // 4])
             else:
@@ -1126,7 +1144,8 @@ def mem(instructType, reqRegisters, temp):
                     Register[reqRegisters[0]] = hex(
                         int(dataSegment[temp // 4], 16))
                 else:
-                    Register[reqRegisters[0]] = hex(int(dataSegment[temp // 4]))
+                    Register[reqRegisters[0]] = hex(
+                        int(dataSegment[temp // 4]))
 
         else:
             dataSegment[temp//4] = Register[reqRegisters[0]]
@@ -1134,7 +1153,6 @@ def mem(instructType, reqRegisters, temp):
 
         tp = previous_registers[1].copy()
         tp[3] = previous_registers[0][3]
-        print(stalls_list)
         previous_registers[1] = tp
         previous_registers[0][3] = int(Register[reqRegisters[0]], 16)
 
@@ -1406,7 +1424,7 @@ class Table2:
             m13 = str(str(j + 2) + "." + str(l))
             l13 = str(str(j + 2) + "." + str(l))
             num = 0
-            om=0
+            om = 0
             inst = ""
             if(j >= 0 and j <= 9):
                 inst = "I"+str(j)+"   "
@@ -1417,39 +1435,39 @@ class Table2:
             elif (j >= 100 and j <= 999):
                 inst = "I" + str(j) + " "
                 l = l+4
-            if j>=3:
-                if info[j-3][4]!=0:
-                  for k in range(0, info[j][0]-info[j-3][4]):
-                      inst = inst + "       "
-                      l = l + 7
-                      num = num + 1
-                  m1 = str(str(j + 2) + "." + str(l))
-                  for k in range(0, info[j - 3][4]):
-                      inst = inst + "Stall  "
-                      l = l + 7
-                      totalStalls+=1
-                      om=om+1
-                  l1= str(str(j + 2) + "." + str(l))
+            if j >= 3:
+                if info[j-3][4] != 0:
+                    for k in range(0, info[j][0]-info[j-3][4]):
+                        inst = inst + "       "
+                        l = l + 7
+                        num = num + 1
+                    m1 = str(str(j + 2) + "." + str(l))
+                    for k in range(0, info[j - 3][4]):
+                        inst = inst + "Stall  "
+                        l = l + 7
+                        totalStalls += 1
+                        om = om+1
+                    l1 = str(str(j + 2) + "." + str(l))
                 else:
                     for k in range(0, info[j][0]):
                         inst = inst + "       "
                         l = l + 7
                         num = num + 1
             else:
-                for k in range(0,info[j][0]):
-                        inst = inst + "       "
-                        l = l+7
-                        num = num + 1
+                for k in range(0, info[j][0]):
+                    inst = inst + "       "
+                    l = l+7
+                    num = num + 1
             if info[j][2] == 0:
-                if j>=1:
-                    if info[j-1][1]!=0:
+                if j >= 1:
+                    if info[j-1][1] != 0:
                         if j >= 2:
                             if info[j - 2][4] != 0:
                                 m2 = str(str(j + 2) + "." + str(l))
                                 for mm in range(0, info[j - 2][4]):
                                     inst = inst + "Stall  "
                                     totalStalls += 1
-                                    om=om+1
+                                    om = om+1
                                     l = l + 7
                                 l2 = str(str(j + 2) + "." + str(l))
                                 for oo in range(j + 1, len(info)):
@@ -1476,8 +1494,8 @@ class Table2:
                                         for mm in range(0, info[j - 2][4]):
                                             inst = inst + "Stall  "
                                             totalStalls += 1
-                                            om=om+1
-                                            l=l+7
+                                            om = om+1
+                                            l = l+7
                                         for oo in range(j + 1, len(info)):
                                             info[oo][0] += info[j - 2][4]
                                 for k in range(0, info[j][1]):
@@ -1495,16 +1513,16 @@ class Table2:
                             if info[j - 2][4] != 0:
                                 for mm in range(0, info[j - 2][4]):
                                     inst = inst + "Stall  "
-                                    l=l+7
+                                    l = l+7
                                     totalStalls += 1
-                                    om=om+1
+                                    om = om+1
                                 for oo in range(j + 1, len(info)):
                                     info[oo][0] += info[j - 2][4]
                         for k in range(0, info[j][1]):
                             inst = inst + "Stall  "
                             l = l + 7
                         l5 = str(str(j + 2) + "." + str(l))
-                #"""
+                # """
                 else:
                     for k in range(1, 2):
                         if k == 1:
@@ -1512,56 +1530,56 @@ class Table2:
                             l = l+7
                             num = num + 1
                     m6 = str(str(j + 2) + "." + str(l))
-                    if j>=2:
-                        if info[j - 2][4] != 0 :
+                    if j >= 2:
+                        if info[j - 2][4] != 0:
                             for mm in range(0, info[j - 2][4]):
                                 inst = inst + "Stall  "
                                 totalStalls += 1
-                                l=l+7
-                                om=om+1
-                            for oo in range(j+1,len(info)):
-                                info[oo][0]+=info[j - 2][4]
+                                l = l+7
+                                om = om+1
+                            for oo in range(j+1, len(info)):
+                                info[oo][0] += info[j - 2][4]
                     for k in range(0, info[j][1]):
                         inst = inst + "Stall  "
                         l = l+7
                     l6 = str(str(j + 2) + "." + str(l))
-                #"""
+                # """
                 n = str(str(j + 2) + "." + str(l))
                 for k in range(2, 6):
-                    if info[j][1]!=0 and k==2 and j>=1:
+                    if info[j][1] != 0 and k == 2 and j >= 1:
                         m7 = str(str(j + 2) + "." + str(l))
                         for mm in range(0, info[j-1][4]):
-                            inst = inst +"Stall  "
+                            inst = inst + "Stall  "
                             totalStalls += 1
-                            om=om+1
-                            l=l+7
+                            om = om+1
+                            l = l+7
                         l7 = str(str(j + 2) + "." + str(l))
                     if k == 2:
                         inst = inst + "ID/RF  "
-                        l=l+7
+                        l = l+7
                     if k == 3:
                         inst = inst + "EXE    "
-                        l=l+7
+                        l = l+7
                     if k == 4:
                         inst = inst + "MEM    "
-                        l=l+7
+                        l = l+7
                     if k == 5:
                         inst = inst + "WB     "
-                        l=l+7
-                    if k==3:
+                        l = l+7
+                    if k == 3:
                         m8 = str(str(j + 2) + "." + str(l))
                         for mm in range(0, info[j][4]):
-                            inst = inst +"Stall  "
-                            l=l+7
+                            inst = inst + "Stall  "
+                            l = l+7
                         l8 = str(str(j + 2) + "." + str(l))
-                    if j>=1:
-                        if info[j-1][4]!=0 and k==2 and info[j][1]==0:
+                    if j >= 1:
+                        if info[j-1][4] != 0 and k == 2 and info[j][1] == 0:
                             m9 = str(str(j + 2) + "." + str(l))
                             for mm in range(0, info[j-1][4]):
-                                inst = inst +"Stall  "
+                                inst = inst + "Stall  "
                                 totalStalls += 1
-                                om=om+1
-                                l=l+7
+                                om = om+1
+                                l = l+7
                             l9 = str(str(j + 2) + "." + str(l))
 
             else:
@@ -1575,53 +1593,53 @@ class Table2:
                 for k in range(1, 6):
                     if k == 1:
                         inst = inst + "IF     "
-                        l=l+7
+                        l = l+7
                     if k == 2:
                         inst = inst + "ID/RF  "
-                        l=l+7
+                        l = l+7
                     if k == 3:
                         inst = inst + "EXE    "
-                        l=l+7
+                        l = l+7
                     if k == 4:
                         inst = inst + "MEM    "
-                        l=l+7
+                        l = l+7
                     if k == 5:
                         inst = inst + "WB     "
-                        l=l+7
-                    if k==3:
+                        l = l+7
+                    if k == 3:
                         m11 = str(str(j + 2) + "." + str(l))
                         for mm in range(0, info[j][4]):
                             inst = inst + "Stall  "
-                            l=l+7
+                            l = l+7
                         l11 = str(str(j + 2) + "." + str(l))
-                    if j>=1:
+                    if j >= 1:
                         m12 = str(str(j + 2) + "." + str(l))
-                        if info[j-1][4]!=0 and k==2:
+                        if info[j-1][4] != 0 and k == 2:
                             for mm in range(0, info[j-1][4]):
-                                inst = inst +"Stall  "
+                                inst = inst + "Stall  "
                                 totalStalls += 1
-                                om=om+1
-                                l=l+7
+                                om = om+1
+                                l = l+7
                         l12 = str(str(j + 2) + "." + str(l))
-                    if j>=2:
-                        if info[j-2][4]!=0 and k==1:
+                    if j >= 2:
+                        if info[j-2][4] != 0 and k == 1:
                             m13 = str(str(j + 2) + "." + str(l))
                             for mm in range(0, info[j-2][4]):
-                                inst = inst +"Stall  "
+                                inst = inst + "Stall  "
                                 totalStalls += 1
-                                om=om+1
-                                l=l+7
+                                om = om+1
+                                l = l+7
                             l13 = str(str(j + 2) + "." + str(l))
             inst = inst+"\n"
             tag = inst
             text = inst
-            flag=0
-            for k in range (0,len(infostall)):
-                if infostall[k][0]==j:
-                    infostall[k][1]+=om
-                    flag=1
+            flag = 0
+            for k in range(0, len(infostall)):
+                if infostall[k][0] == j:
+                    infostall[k][1] += om
+                    flag = 1
                     break
-            if flag==0 and om!=0:
+            if flag == 0 and om != 0:
                 b = []
                 b.append(info[j][3])
                 b.append(om)
@@ -1662,6 +1680,7 @@ class Table2:
         stalls1 = Label(root, text=stall, width=80, fg='black',
                         bg='pink', padx='10', pady='10', font=boldFont)
         stalls1.grid(row=2, column=0)
+
 
 class Table3:
     def __init__(self, root):
@@ -1731,6 +1750,7 @@ class Table3:
         h2.config(command=text2.xview)
         v2.config(command=text2.yview)
 
+
 def press(num):
     global PC
     global my_clock
@@ -1776,6 +1796,7 @@ def press(num):
                 label = Label(root, text=toPrint).pack()
                 break
             elif ans == "BREAK":
+                print(number_of_hits_in_l1, number_of_hits_in_l2)
                 # adding 4 extra for the end
                 my_clock += 4
                 break
@@ -1841,8 +1862,10 @@ def press(num):
         t1 = Table1(ctr_right2)
         t2 = Table2(stalls)
         t3 = Table3(data_forwarding)
-        cache_main_level_1 = real_cache(set_number_1, associativity_1, block_size_1)
-        cache_main_level_2 = real_cache(set_number_2, associativity_2, block_size_2)
+        cache_main_level_1 = real_cache(
+            set_number_1, associativity_1, block_size_1)
+        cache_main_level_2 = real_cache(
+            set_number_2, associativity_2, block_size_2)
         gui.mainloop()
 
 
@@ -1919,7 +1942,7 @@ Label(information, text="2nd line should contain block size of level 1").grid(
     row=6, sticky=W)
 Label(information, text="3rd line should contain associativity of level 1").grid(
     row=7, sticky=W)
-Label(information, text="4th line should contain access latency of level 1").grid(
+Label(information, text="4th line should contain access latency of level 2").grid(
     row=8, sticky=W)
 Label(information, text="5th line should contain cache size of level 2").grid(
     row=9, sticky=W)
@@ -1927,7 +1950,7 @@ Label(information, text="6th line should contain block size of level 2").grid(
     row=10, sticky=W)
 Label(information, text="7th line should contain associativity of level 2").grid(
     row=11, sticky=W)
-Label(information, text="8th line should contain access latency of level 2").grid(
+Label(information, text="8th line should contain access latency of main memory").grid(
     row=12, sticky=W)
 Button(information, text='Upload File', command=lambda: open_file()).grid(
     row=13, sticky=W, pady=4, padx=4)
@@ -1980,8 +2003,10 @@ def NewFile():
     global MemAddres
     global cache_main_level_1
     global cache_main_level_2
-    cache_main_level_1 = real_cache(set_number_1, associativity_1, block_size_1)
-    cache_main_level_2 = real_cache(set_number_2, associativity_2, block_size_2)
+    cache_main_level_1 = real_cache(
+        set_number_1, associativity_1, block_size_1)
+    cache_main_level_2 = real_cache(
+        set_number_2, associativity_2, block_size_2)
     dataSegment = 1024 * [0]
     name = askopenfilename()
     Instructions, Data = InputFile.InputFile(name)
@@ -2157,8 +2182,10 @@ def submit():
     t1 = Table1(ctr_right2)
     t2 = Table2(stalls)
     t3 = Table3(data_forwarding)
-    cache_main_level_1 = real_cache(set_number_1, associativity_1, block_size_1)
-    cache_main_level_2 = real_cache(set_number_2, associativity_2, block_size_2)
+    cache_main_level_1 = real_cache(
+        set_number_1, associativity_1, block_size_1)
+    cache_main_level_2 = real_cache(
+        set_number_2, associativity_2, block_size_2)
     gui.mainloop()
 
 
