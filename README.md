@@ -4,12 +4,30 @@ The project mainly focus on building a **Assembly language simulator** with **MI
 
 ## Functions support in phase 1
 
-1. Arithmetic
-1. Bitwise
-1. Initializing
-1. Branch
-1. Memory
-1. Printing
+- Mips operations
+  - Arithmetic
+  - Bitwise
+  - Initializing
+  - Branch
+  - Memory
+  - Printing
+- GUI to show them
+- Edit option in instructions
+
+## Functions supported in phase 2
+
+- Pipeline simulated
+- pipeline visualized
+- Average CPI
+- Data-forwarding information
+- Stalls information
+
+## Functions supported in phase 3
+
+- Two level cache
+- File uploading in GUI
+- Restart option
+- Total HIT rate of Level 1 and Level 2 cache
 
 ### Programming Language used
 
@@ -19,6 +37,8 @@ The project mainly focus on building a **Assembly language simulator** with **MI
 
 - Check Rules.md for basic rules to follow
 - Check Manual.md for instruction set and how to use them.
+- Check Pipeline.md for information on pipelining
+- Check Cache.md for information on cache
 
 ### Further Improvements that can be done
 
@@ -26,10 +46,11 @@ The project mainly focus on building a **Assembly language simulator** with **MI
 - Making GUI more interactive
 - Adding run time error detection methods.
 - Making all the 5 functions of pipelining parallel to implement pipelining.
+- Adding some design to add more level of cache
 
-### PIPELINING IS IMPLEMENTED
+### Drawbacks
 
-- Check `Pipelining.md `   for more details
+- Using memory as integer not character as most operations were on integers.
+- Unable to add hexadecimal
 
 ### Bubble Sort code is given to test
-
