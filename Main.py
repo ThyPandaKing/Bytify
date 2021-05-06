@@ -1808,9 +1808,15 @@ class Table4:
         inst = inst + "                                                  CACHE 1  "
         inst = inst + "\n\n\n"
         text3.insert(END, inst)
+        text3.tag_add("start2", "1.47", "1.100")
+        text3.tag_config("start2", background="salmon1")
         l=associativity_1
         l=l*10
         inst = ""
+        oo=set_number_1*l
+        o=0
+        p=0
+        p=2
         for j in range (0,set_number_1):
             if j>=0 and j<=9:
                 m=6
@@ -1819,29 +1825,53 @@ class Table4:
             else:
                 m=8
             n=l-m
+            inst=""
             if n%2==0:
                 for k in range(0,n//2):
                     inst=inst+" "
                 inst=inst+"SET- "+str(j)
                 for k in range(0,n//2):
                     inst=inst+" "
+                text3.insert(END, inst)
             else:
                 for k in range(0,n//2-1):
                     inst=inst+" "
                 inst=inst+"SET- "+str(j)
                 for k in range(0,n//2+1):
                     inst=inst+" "
-        text3.insert(END, inst)
-        text3.insert(END, "\n\n")
+                text3.insert(END, inst)
+            if j%2==0:
+                m = "4." + str(o)
+                n = "4."+str(o+l)
+                text3.tag_add("start1", m, n)
+                text3.tag_config("start1", background="yellow")
+            else:
+                m = "4." + str(o)
+                n = "4." + str(o + l)
+                text3.tag_add("start", m, n)
+                text3.tag_config("start", background="MediumOrchid1")
+            o=o+l
+        inst="\n"
+        text3.insert(END,inst)
+        inst = ""
+        for  j in range(0,oo):
+            inst+inst+" "
+        inst=inst+"\n"
+        text3.insert(END,inst)
         inst=""
+        p1=5
+        o=0
+        l=10
+        p=6
         for j in range(0,set_number_1):
             for k in range(0,associativity_1):
+                inst=""
                 inst=inst+"BLOCK- "+str(k)
                 inst1="BLOCK- "+str(k)
-                for o in range(0,10-len(inst1)):
+                for o1 in range(0,10-len(inst1)):
                     inst=inst+" "
-        text3.insert(END, inst)
-        text3.insert(END, "\n\n")
+                text3.insert(END, inst)
+        text3.insert(END, "\n")
         inst=""
         for j in range(0,set_number_1):
           for n in range(0,associativity_1):
@@ -1850,7 +1880,13 @@ class Table4:
             for k in range(0,10-len(inst1)):
                 inst=inst+" "
         text3.insert(END, inst)
-        text3.insert(END, "\n\n")
+        text3.insert(END, "\n")
+        inst = ""
+        for  j in range(0,oo):
+            inst+inst+" "
+        inst=inst+"\n"
+        text3.insert(END,inst)
+        p=8
         for l in range(0, block_size_1):
             inst=""
             for j in range(0,set_number_1):
@@ -1861,15 +1897,38 @@ class Table4:
                         inst=inst+" "
             inst=inst+"\n"
             text3.insert(END, inst)
+            p+=1
+        for j in range(p1,p+1):
+            o=0
+            l=10
+            for k in range(0,oo//4):
+                if k % 2 == 0:
+                    m = str(j)+"." + str(k*10)
+                    n = str(j)+"." + str(k*10 + l)
+                    text3.tag_add("start1", m, n)
+                    text3.tag_config("start1", background="yellow")
+                else:
+                    m = str(j)+"." + str(k*10)
+                    n = str(j)+"." + str(k*10 + l)
+                    text3.tag_add("start", m, n)
+                    text3.tag_config("start", background="MediumOrchid1")
+                o = o + l
         text3.insert(END,"\n\n\n")
         inst = ""
         inst = inst + "                                                  CACHE 2  "
         inst = inst + "\n\n\n"
+        p=p+4
         text3.insert(END, inst)
+        text3.tag_add("start2", str(p)+".47", str(p)+".100")
+        text3.tag_config("start2", background="salmon1")
         l = associativity_2
         l = l * 10
+        p+=3
+        p1=p
         inst = ""
+        o=0
         for j in range(0, set_number_2):
+            inst=""
             if j >= 0 and j <= 9:
                 m = 6
             elif j >= 10 and j <= 99:
@@ -1889,7 +1948,18 @@ class Table4:
                 inst = inst + "SET- " + str(j)
                 for k in range(0, n // 2 + 1):
                     inst = inst + " "
-        text3.insert(END, inst)
+            text3.insert(END, inst)
+            if j%2==0:
+                m = str(p)+"." + str(o)
+                n = str(p)+"."+str(o+l)
+                text3.tag_add("start3", m, n)
+                text3.tag_config("start3", background="dodger blue")
+            else:
+                m = str(p)+"." + str(o)
+                n = str(p)+"." + str(o + l)
+                text3.tag_add("start4", m, n)
+                text3.tag_config("start4", background="gold")
+            o=o+l
         text3.insert(END, "\n\n")
         inst = ""
         for j in range(0, set_number_2):
@@ -1899,8 +1969,9 @@ class Table4:
                 for o in range(0, 10 - len(inst1)):
                     inst = inst + " "
         text3.insert(END, inst)
-        text3.insert(END, "\n\n")
+        text3.insert(END, "\n")
         inst = ""
+        p+=6
         for j in range(0, set_number_2):
             for n in range(0, associativity_2):
                 inst = inst + str(cache_main_level_2.cache[j].set_arr[n].tag)
@@ -1919,6 +1990,22 @@ class Table4:
                         inst = inst + " "
             inst = inst + "\n"
             text3.insert(END, inst)
+            p+=1
+        for j in range(p1+1,p+1):
+            o=0
+            l=10
+            for k in range(0,oo//4):
+                if k % 2 == 0:
+                    m = str(j)+"." + str(k*10)
+                    n = str(j)+"." + str(k*10 + l)
+                    text3.tag_add("start3", m, n)
+                    text3.tag_config("start3", background="dodger blue")
+                else:
+                    m = str(j)+"." + str(k*10)
+                    n = str(j)+"." + str(k*10 + l)
+                    text3.tag_add("start4", m, n)
+                    text3.tag_config("start4", background="gold")
+                o = o + l
         text3.pack(side=TOP)
         h3.config(command=text3.xview)
         v3.config(command=text3.yview)
@@ -2051,7 +2138,7 @@ def press(num):
 
 
 information = Tk()
-information.title("Information about pipelining")
+information.title("Information about pipelining and cache")
 # information.geometry("400x200")
 
 
@@ -2212,7 +2299,7 @@ windowWidth = information.winfo_reqwidth()
 windowHeight = information.winfo_reqheight()
 positionRight = int(information.winfo_screenwidth() / 2 - windowWidth / 2)
 positionDown = int(information.winfo_screenheight() / 2 - windowHeight / 2)
-information.geometry("+{}+{}".format(positionRight, positionDown))
+information.geometry("+{}+{}".format(positionRight, positionDown-80))
 information.mainloop()
 
 cache_main_level_1 = real_cache(set_number_1, associativity_1, block_size_1)
@@ -2301,6 +2388,7 @@ tabControl.add(cache,
 tabControl.pack(expand=1, fill="both")
 t2 = Table2(stalls)
 t3 = Table3(data_forwarding)
+t4 = Table4(cache)
 
 center.grid(row=1, sticky="nsew")
 center.grid_rowconfigure(0, weight=1)
